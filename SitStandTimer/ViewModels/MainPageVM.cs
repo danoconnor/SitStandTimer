@@ -32,7 +32,7 @@ namespace SitStandTimer.ViewModels
             TimeSpan remainingTime = TimeManager.Instance.GetTimeRemainingSeconds();
 
             ModeText = TimeManager.Instance.CurrentMode.ToString().ToUpper();
-            TimeLeftText = $"{remainingTime.ToString(@"mm\:ss")} until you can {TimeManager.Instance.NextMode.ToString().ToUpper()}";
+            TimeLeftText = $"{remainingTime.ToString(@"mm\:ss")} until you can {TimeManager.Instance.NextMode.ToString().ToLower()}";
 
             RaisePropertyChanged(nameof(ModeText));
             RaisePropertyChanged(nameof(TimeLeftText));

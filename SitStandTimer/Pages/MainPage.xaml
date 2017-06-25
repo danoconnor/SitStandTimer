@@ -13,7 +13,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         
-        <TextBlock Text="{x:Bind ViewModel.ModeText, Mode=OneWay}" FontSize="50" Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Center" />
+        <TextBlock Text="{x:Bind ViewModel.ModeText, Mode=OneWay}" FontSize="50" FontWeight="Light" OpticalMarginAlignment="TrimSideBearings" Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Center" />
         <TextBlock Text="{x:Bind ViewModel.TimeLeftText, Mode=OneWay}" FontSize="30" Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Center" />
     </Grid>
 </Page>
