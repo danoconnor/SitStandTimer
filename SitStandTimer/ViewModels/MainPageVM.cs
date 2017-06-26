@@ -29,7 +29,7 @@ namespace SitStandTimer.ViewModels
         private void timerTick(object sender, object args)
         {
             // Get the updated remaining time from TimeManager
-            TimeSpan remainingTime = TimeManager.Instance.GetTimeRemainingSeconds();
+            TimeSpan remainingTime = TimeManager.Instance.GetTimeRemainingInCurrentMode();
 
             ModeText = TimeManager.Instance.CurrentMode.ToString().ToUpper();
             TimeLeftText = $"{remainingTime.ToString(@"mm\:ss")} until you can {TimeManager.Instance.NextMode.ToString().ToLower()}";

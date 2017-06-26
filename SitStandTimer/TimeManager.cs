@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Windows.Data.Xml.Dom;
+using Windows.UI.Notifications;
 using Windows.UI.Xaml;
 
 namespace SitStandTimer
@@ -29,8 +31,10 @@ namespace SitStandTimer
 
         private TimeManager()
         {
-            CurrentMode = _modeIntervals.Keys.ToArray()[0];
+            CurrentMode = _modes[0];
             _currentModeStart = DateTime.Now;
+
+            _toastNotifier = ToastNotificationManager.CreateToastNotifier();
         }
 
         public Mode CurrentMode { get; private set; }
@@ -38,12 +42,11 @@ namespace SitStandTimer
         {
             get
             {
-                int currentModeIndex = _modes.IndexOf(CurrentMode);
-                return _modes[(currentModeIndex + 1) % _modes.Count];
+                return getNextMode(CurrentMode);
             }
         }
 
-        public TimeSpan GetTimeRemainingSeconds()
+        public TimeSpan GetTimeRemainingInCurrentMode()
         {
             DateTime now = DateTime.Now;
             TimeSpan timeInCurrentMode = now - _currentModeStart;
@@ -61,12 +64,61 @@ namespace SitStandTimer
             return maxTimeInCurrentMode - timeInCurrentMode;
         }
 
+        /// <summary>
+        /// Clears the queue of currently scheduled notifications and schedules all notifications that should happen in the next 30 min.
+        /// 30 min is chosen because our background task is guarenteed to run every 30 min (smallest possible interval).
+        /// Each time the background task runs, it will call this function and set all notifications that should appear before the next time the task is able to run.
+        /// </summary>
+        public void ScheduleNotifications()
+        {
+            // First, clear the scheduled notification queue
+            IReadOnlyList<ScheduledToastNotification> scheduledNotifications = _toastNotifier.GetScheduledToastNotifications();
+            foreach (ScheduledToastNotification notification in scheduledNotifications)
+            {
+                _toastNotifier.RemoveFromSchedule(notification);
+            }
+
+            // Clear any notifications from the user's action center
+            ToastNotificationManager.History.Clear();
+
+            // Schedule all notifications that will appear in the next 30 min
+            DateTimeOffset now = DateTimeOffset.Now;
+            TimeSpan thirtyMin = TimeSpan.FromMinutes(30);
+            Mode modeToNotifyEnd = CurrentMode;
+            DateTimeOffset nextNotificationTime = now + GetTimeRemainingInCurrentMode();
+
+            while (nextNotificationTime - now < thirtyMin)
+            {
+                Mode nextMode = getNextMode(modeToNotifyEnd);
+
+                XmlDocument toastXml = ToastNotificationManager.GetTemplateContent(ToastTemplateType.ToastImageAndText01);
+                IXmlNode textNode = toastXml.GetElementsByTagName("text")[0];
+                textNode.AppendChild(toastXml.CreateTextNode($"Time to {nextMode}! ({nextNotificationTime.ToString("t")})"));
+
+                ScheduledToastNotification notification = new ScheduledToastNotification(toastXml, nextNotificationTime);
+                _toastNotifier.AddToSchedule(notification);
+
+                modeToNotifyEnd = nextMode;
+
+                TimeSpan timeForMode = _modeIntervals[modeToNotifyEnd];
+                nextNotificationTime = nextNotificationTime + timeForMode;
+            }
+        }
+
+        private Mode getNextMode(Mode currentMode)
+        {
+            int currentModeIndex = _modes.IndexOf(currentMode);
+            return _modes[(currentModeIndex + 1) % _modes.Count];
+        }
+
         private DateTime _currentModeStart;
+
+        private ToastNotifier _toastNotifier;
 
         private static readonly Dictionary<Mode, TimeSpan> _modeIntervals = new Dictionary<Mode, TimeSpan>()
         {
-            { Mode.Sit, TimeSpan.FromMinutes(.25) },
-            { Mode.Stand, TimeSpan.FromMinutes(.25) }
+            { Mode.Sit, TimeSpan.FromMinutes(1) },
+            { Mode.Stand, TimeSpan.FromMinutes(1) }
         };
         private static readonly List<Mode> _modes = _modeIntervals.Keys.ToList();
     }
