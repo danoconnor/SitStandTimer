@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using SitStandTimer.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,6 +11,7 @@ using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.Background;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -31,9 +34,10 @@ namespace SitStandTimer
         public App()
         {
             this.InitializeComponent();
+            this.Suspending += OnSuspending;
 
             // Try to register the app for background execution
-            var registerTask = registerBackgroundTaskAsync();
+            var registerTask = registerTimeBackgroundTaskAsync();
 
             // Setup any notifications that need to occur before the background task runs
             TimeManager.Instance.ScheduleNotifications();
@@ -57,13 +61,22 @@ namespace SitStandTimer
 
                 rootFrame.NavigationFailed += OnNavigationFailed;
 
-                if (e.PreviousExecutionState == ApplicationExecutionState.Terminated)
-                {
-                    //TODO: Load state from previously suspended application
-                }
-
                 // Place the frame in the current Window
                 Window.Current.Content = rootFrame;
+            }
+
+            // Always restore state from disk. 
+            // To simplify, I'm going to do a bad thing and block the main thread while the disk read happens.
+            // Since this happens before Window.Current.Activate is called, the splash screen should stay up and the user won't see any weird UI.
+            try
+            {
+                Task restoreTask = restoreStateFromDisk();
+                restoreTask.Wait();
+            }
+            catch (Exception)
+            {
+                // A FileNotFoundException is expected if there is no saved state file.
+                // Ignore the error because we don't have telemetry hooked up yet to log it and we don't want the whole app launch cancelled.
             }
 
             if (e.PrelaunchActivated == false)
@@ -84,8 +97,42 @@ namespace SitStandTimer
         {
             base.OnBackgroundActivated(args);
 
-            // Have the time manager schedule any notifications that should happen before the next time the background task runs
-            TimeManager.Instance.ScheduleNotifications();
+            BackgroundTaskDeferral deferral = args.TaskInstance.GetDeferral();
+
+            Task backgroundWork = Task.Run(async () =>
+            {
+                // Make sure both background tasks are registered
+                Task restoreStateTask = restoreStateFromDisk();
+                Task backgroundRegistrationTask = registerTimeBackgroundTaskAsync();
+
+                try
+                {
+                    await restoreStateTask;
+                }
+                catch (Exception)
+                {
+                    // A FileNotFoundException is expected if the save state file doesn't exist (although at this point it should)
+                    // Carry on even if we are in the wrong state
+                    // This app doesn't have telemetry hooked up yet so just eat the exception
+                }
+
+                // Have the time manager schedule any notifications that should happen before the next time the background task runs
+                TimeManager.Instance.ScheduleNotifications();
+
+                await backgroundRegistrationTask;
+            }).ContinueWith(innerTask =>
+            {
+                deferral.Complete();
+            });
+        }
+
+        private void OnSuspending(object sender, SuspendingEventArgs e)
+        {
+            SuspendingDeferral deferral = e.SuspendingOperation.GetDeferral();
+            Task saveStateTask = saveStateToDisk().ContinueWith(innerTask =>
+            {
+                deferral.Complete();
+            });
         }
 
         /// <summary>
@@ -98,36 +145,93 @@ namespace SitStandTimer
             throw new Exception("Failed to load Page " + e.SourcePageType.FullName);
         }
 
-        private async Task registerBackgroundTaskAsync()
+        private Task registerTimeBackgroundTaskAsync()
         {
-            BackgroundAccessStatus backgroundAccess = await BackgroundExecutionManager.RequestAccessAsync();
-
-            if (backgroundAccess == BackgroundAccessStatus.AlwaysAllowed ||
-                backgroundAccess == BackgroundAccessStatus.AllowedSubjectToSystemPolicy)
+            return Task.Run(async () => 
             {
-                bool needToRegister = true;
-                foreach (var task in BackgroundTaskRegistration.AllTasks)
+                BackgroundAccessStatus backgroundAccess = await BackgroundExecutionManager.RequestAccessAsync();
+
+                if (backgroundAccess == BackgroundAccessStatus.AlwaysAllowed ||
+                    backgroundAccess == BackgroundAccessStatus.AllowedSubjectToSystemPolicy)
                 {
-                    if (task.Value.Name == _backgroundTaskName)
+                    bool needToRegisterTimeTask = true;
+                    bool needToRegisterUserPresentTask = true;
+                    foreach (KeyValuePair<Guid, IBackgroundTaskRegistration> task in BackgroundTaskRegistration.AllTasks)
                     {
-                        needToRegister = false;
-                        break;
+                        if (task.Value.Name == _timeBackgroundTaskName)
+                        {
+                            needToRegisterTimeTask = false;
+                        }
+                        else if (task.Value.Name == _userPresentBackgroundTaskName)
+                        {
+                            needToRegisterUserPresentTask = false;
+                        }
+                    }
+
+                    // Only register if this task has not previously been registered
+                    if (needToRegisterTimeTask)
+                    {
+                        // Set the task to run every 15 minutes (guarenteed to run at least every 30 min).
+                        BackgroundTaskBuilder taskBuilder = new BackgroundTaskBuilder();
+                        taskBuilder.Name = _timeBackgroundTaskName;
+                        taskBuilder.SetTrigger(new TimeTrigger(15, false));
+
+                        taskBuilder.Register();
+                    }
+
+                    if (needToRegisterUserPresentTask)
+                    {
+                        // Set the task to run whenever the user becomes present. The intention is to have this run when the system turns on so we can register the time notification.
+                        BackgroundTaskBuilder taskBuilder = new BackgroundTaskBuilder();
+                        taskBuilder.Name = _userPresentBackgroundTaskName;
+                        taskBuilder.SetTrigger(new SystemTrigger(SystemTriggerType.UserPresent, false));
+
+                        taskBuilder.Register();
                     }
                 }
-
-                // Only register if this task has not previously been registered
-                if (needToRegister)
-                {
-                    // Set the task to run every 15 minutes (guarenteed to run at least every 30 min). Not sure if there is a better way to do this.
-                    BackgroundTaskBuilder taskBuilder = new BackgroundTaskBuilder();
-                    taskBuilder.Name = _backgroundTaskName;
-                    taskBuilder.SetTrigger(new TimeTrigger(15, false));
-
-                    taskBuilder.Register();
-                }
-            }
+            });
         }
 
-        private const string _backgroundTaskName = "SitStandTimerBackgroundTask";
+        private Task saveStateToDisk()
+        {
+            return Task.Run(async () =>
+            {
+                // Save the current mode information to disk
+                SaveStateModel saveInfo = TimeManager.Instance.GetCurrentModeInfo();
+
+                // Not backed up to the cloud for now. Haven't thought through the details of that.
+                StorageFolder folder = ApplicationData.Current.LocalCacheFolder;
+                StorageFile saveFile = await folder.CreateFileAsync(_saveFileName, CreationCollisionOption.ReplaceExisting);
+                
+                using (Stream outputStream = await saveFile.OpenStreamForWriteAsync())
+                using (StreamWriter output = new StreamWriter(outputStream))
+                {
+                    output.Write(JsonConvert.SerializeObject(saveInfo));
+                }
+            });
+        }
+
+        private Task restoreStateFromDisk()
+        {
+            return Task.Run(async () =>
+            {
+                StorageFolder folder = ApplicationData.Current.LocalCacheFolder;
+                StorageFile saveFile = await folder.GetFileAsync(_saveFileName);
+
+                SaveStateModel savedState = null;
+                using (Stream inputStream = await saveFile.OpenStreamForReadAsync())
+                using (StreamReader input = new StreamReader(inputStream))
+                {
+                    string json = input.ReadToEnd();
+                    savedState = JsonConvert.DeserializeObject<SaveStateModel>(json);
+                }
+
+                TimeManager.Instance.Initialize(savedState);
+            });
+        }
+
+        private const string _timeBackgroundTaskName = "SitStandTimerBackgroundTimeTask";
+        private const string _userPresentBackgroundTaskName = "SitStandTimerBackgroundUserPresentTask";
+        private const string _saveFileName = "SitStandTimer_SaveState.json";
     }
 }

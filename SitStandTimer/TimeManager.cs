@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SitStandTimer.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Windows.Data.Xml.Dom;
@@ -46,6 +47,14 @@ namespace SitStandTimer
             }
         }
 
+        public void Initialize(SaveStateModel savedState)
+        {
+            // Use the saved state as a starting point and then figure out what mode we should currently be in.
+            // TODO: figure out current mode based on elapsed time since the save state
+            CurrentMode = savedState.CurrentMode;
+            _currentModeStart = new DateTime(savedState.CurrentModeStartTime);
+        }
+
         public TimeSpan GetTimeRemainingInCurrentMode()
         {
             DateTime now = DateTime.Now;
@@ -78,7 +87,7 @@ namespace SitStandTimer
                 _toastNotifier.RemoveFromSchedule(notification);
             }
 
-            // Clear any notifications from the user's action center
+            // Clear any of our existing notifications from the user's action center
             ToastNotificationManager.History.Clear();
 
             // Schedule all notifications that will appear in the next 30 min
@@ -105,6 +114,18 @@ namespace SitStandTimer
             }
         }
 
+        public SaveStateModel GetCurrentModeInfo()
+        {
+            // Make sure the mode is up to date
+            GetTimeRemainingInCurrentMode();
+
+            return new SaveStateModel()
+            {
+                CurrentMode = CurrentMode,
+                CurrentModeStartTime = _currentModeStart.ToBinary()
+            };
+        }
+
         private Mode getNextMode(Mode currentMode)
         {
             int currentModeIndex = _modes.IndexOf(currentMode);
@@ -112,13 +133,12 @@ namespace SitStandTimer
         }
 
         private DateTime _currentModeStart;
-
         private ToastNotifier _toastNotifier;
 
         private static readonly Dictionary<Mode, TimeSpan> _modeIntervals = new Dictionary<Mode, TimeSpan>()
         {
-            { Mode.Sit, TimeSpan.FromMinutes(1) },
-            { Mode.Stand, TimeSpan.FromMinutes(1) }
+            { Mode.Sit, TimeSpan.FromMinutes(.5) },
+            { Mode.Stand, TimeSpan.FromMinutes(.5) }
         };
         private static readonly List<Mode> _modes = _modeIntervals.Keys.ToList();
     }
