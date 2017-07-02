@@ -38,9 +38,6 @@ namespace SitStandTimer
 
             // Try to register the app for background execution
             var registerTask = registerTimeBackgroundTaskAsync();
-
-            // Setup any notifications that need to occur before the background task runs
-            TimeManager.Instance.ScheduleNotifications();
         }
 
         /// <summary>
@@ -215,18 +212,29 @@ namespace SitStandTimer
         {
             return Task.Run(async () =>
             {
-                StorageFolder folder = ApplicationData.Current.LocalCacheFolder;
-                StorageFile saveFile = await folder.GetFileAsync(_saveFileName);
-
-                SaveStateModel savedState = null;
-                using (Stream inputStream = await saveFile.OpenStreamForReadAsync())
-                using (StreamReader input = new StreamReader(inputStream))
+                try
                 {
-                    string json = input.ReadToEnd();
-                    savedState = JsonConvert.DeserializeObject<SaveStateModel>(json);
+                    StorageFolder folder = ApplicationData.Current.LocalCacheFolder;
+                    StorageFile saveFile = await folder.GetFileAsync(_saveFileName);
+
+                    SaveStateModel savedState = null;
+                    using (Stream inputStream = await saveFile.OpenStreamForReadAsync())
+                    using (StreamReader input = new StreamReader(inputStream))
+                    {
+                        string json = input.ReadToEnd();
+                        savedState = JsonConvert.DeserializeObject<SaveStateModel>(json);
+                    }
+
+                    TimeManager.Instance.Initialize(savedState);
+                }
+                catch (FileNotFoundException)
+                {
+                    // Ignore because it just means that there was no save file present
+                    // TODO: how to handle other exception types?? Need some logging through HockeyApp
                 }
 
-                TimeManager.Instance.Initialize(savedState);
+                // Refresh the notification queue just to make sure everything is in sync.
+                TimeManager.Instance.ScheduleNotifications();
             });
         }
 
