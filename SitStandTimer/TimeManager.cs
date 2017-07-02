@@ -92,10 +92,14 @@ namespace SitStandTimer
         /// </summary>
         public void ScheduleNotifications()
         {
+            List<string> removedNotifications = new List<string>();
+            List<string> addedNotifications = new List<string>();
+
             // First, clear the scheduled notification queue
             IReadOnlyList<ScheduledToastNotification> scheduledNotifications = _toastNotifier.GetScheduledToastNotifications();
             foreach (ScheduledToastNotification notification in scheduledNotifications)
             {
+                removedNotifications.Add(notification.DeliveryTime.ToString());
                 _toastNotifier.RemoveFromSchedule(notification);
             }
 
@@ -119,12 +123,20 @@ namespace SitStandTimer
 
                 ScheduledToastNotification notification = new ScheduledToastNotification(toastXml, nextNotificationTime);
                 _toastNotifier.AddToSchedule(notification);
+                addedNotifications.Add(notification.DeliveryTime.ToString());
 
                 modeToNotifyEnd = nextMode;
 
                 TimeSpan timeForMode = _modeIntervals[modeToNotifyEnd];
                 nextNotificationTime = nextNotificationTime + timeForMode;
             }
+
+            _lastDebugInfo = new DebugInfo()
+            {
+                LastRunTime = DateTime.Now.ToString(),
+                NotificationsScheduled = addedNotifications.ToArray(),
+                ScheduledNotificationsRemoved = removedNotifications.ToArray()
+            };
         }
 
         public SaveStateModel GetCurrentModeInfo()
@@ -135,7 +147,8 @@ namespace SitStandTimer
             return new SaveStateModel()
             {
                 CurrentMode = CurrentMode,
-                CurrentModeStartTime = _currentModeStart.ToBinary()
+                CurrentModeStartTime = _currentModeStart.ToBinary(),
+                LastRunDebugInfo = _lastDebugInfo
             };
         }
 
@@ -147,11 +160,12 @@ namespace SitStandTimer
 
         private DateTime _currentModeStart;
         private ToastNotifier _toastNotifier;
+        private DebugInfo _lastDebugInfo;
 
         private static readonly Dictionary<Mode, TimeSpan> _modeIntervals = new Dictionary<Mode, TimeSpan>()
         {
-            { Mode.Sit, TimeSpan.FromMinutes(60) },
-            { Mode.Stand, TimeSpan.FromMinutes(60) }
+            { Mode.Sit, TimeSpan.FromMinutes(15) },
+            { Mode.Stand, TimeSpan.FromMinutes(15) }
         };
         private static readonly List<Mode> _modes = _modeIntervals.Keys.ToList();
     }

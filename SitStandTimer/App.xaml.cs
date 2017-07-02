@@ -111,11 +111,13 @@ namespace SitStandTimer
                     // A FileNotFoundException is expected if the save state file doesn't exist (although at this point it should)
                     // Carry on even if we are in the wrong state
                     // This app doesn't have telemetry hooked up yet so just eat the exception
+                    // TODO: add HockeyApp telemetry
                 }
 
                 // Have the time manager schedule any notifications that should happen before the next time the background task runs
                 TimeManager.Instance.ScheduleNotifications();
 
+                await saveStateToDisk();
                 await backgroundRegistrationTask;
             }).ContinueWith(innerTask =>
             {
