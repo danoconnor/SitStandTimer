@@ -2,6 +2,7 @@
     x:Class="SitStandTimer.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:SitStandTimer"
     xmlns:converters="using:SitStandTimer.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -10,13 +11,12 @@
     <Page.Resources>
         <converters:SymbolToGlyphStringConverter x:Key="SymbolToGlyphStringConverter" />
 
-        <Style x:Key="MainPageButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
+        <Style x:Key="MainPageButtonStyle" TargetType="Button" BasedOn="{StaticResource NoBordersButtonStyle}">
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
     </Page.Resources>
     
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="*"/>
@@ -25,15 +25,15 @@
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        
+
         <TextBlock Text="{x:Bind ViewModel.ModeText, Mode=OneWay}" FontSize="50" FontWeight="Light" OpticalMarginAlignment="TrimSideBearings" Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Center" Grid.ColumnSpan="2"/>
         <TextBlock Text="{x:Bind ViewModel.TimeLeftText, Mode=OneWay}" FontSize="30" Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.ColumnSpan="2"/>
 
-        <Button Click="{x:Bind ViewModel.SwitchState}" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,20,0" Style="{StaticResource MainPageButtonStyle}">
+        <Button Click="{x:Bind ViewModel.SwitchState}" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Margin="0,0,20,0" Style="{StaticResource MainPageButtonStyle}">
             <FontIcon Glyph="{x:Bind ViewModel.ChangeStateIcon, Mode=OneWay, Converter={StaticResource SymbolToGlyphStringConverter}}" FontSize="30" />
         </Button>
 
-        <Button Click="{x:Bind ViewModel.SkipToNextMode}" Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="20,0,0,0" Style="{StaticResource MainPageButtonStyle}">
+        <Button Click="{x:Bind ViewModel.SkipToNextMode}" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" Margin="20,0,0,0" Style="{StaticResource MainPageButtonStyle}">
             <FontIcon Glyph="{x:Bind ViewModel.NextIcon, Converter={StaticResource SymbolToGlyphStringConverter}}" FontSize="30" />
         </Button>
     </Grid>

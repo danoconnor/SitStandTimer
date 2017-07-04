@@ -1,4 +1,5 @@
 ﻿using SitStandTimer.ViewModels;
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
 namespace SitStandTimer
@@ -13,5 +14,10 @@ namespace SitStandTimer
         }
 
         public MainPageVM ViewModel { get; private set; }
+
+        private void ToggleHamburgerMenu(object sender, RoutedEventArgs e)
+        {
+            //SplitView.IsPaneOpen = !SplitView.IsPaneOpen;
+        }
     }
 }
