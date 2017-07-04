@@ -14,6 +14,12 @@ namespace SitStandTimer
         Stand
     }
 
+    public enum TimerState
+    {
+        Running,
+        Paused
+    }
+
     public class TimeManager
     {
         private static TimeManager _instance;
@@ -33,11 +39,14 @@ namespace SitStandTimer
         private TimeManager()
         {
             CurrentMode = _modes[0];
+            State = TimerState.Running;
             _currentModeStart = DateTime.Now;
+            _timeRemainingInCurrentMode = _modeIntervals[CurrentMode];
 
             _toastNotifier = ToastNotificationManager.CreateToastNotifier();
         }
 
+        public TimerState State { get; private set; }
         public Mode CurrentMode { get; private set; }
         public Mode NextMode
         {
@@ -49,40 +58,84 @@ namespace SitStandTimer
 
         public void Initialize(SaveStateModel savedState)
         {
-            // Use the saved state as a starting point and then figure out what mode we should currently be in based on the 
-            // elapsed time.
             DateTime now = DateTime.Now;
-            Mode mode = savedState.CurrentMode;
-            DateTime modeStartTime = DateTime.FromBinary(savedState.CurrentModeStartTime);
-            DateTime modeEndTime = modeStartTime + _modeIntervals[mode];
 
-            while (modeEndTime < now)
+            State = savedState.TimerState;
+            CurrentMode = savedState.CurrentMode;
+            _timeRemainingInCurrentMode = savedState.TimeRemainingInCurrentMode;
+
+            if (State == TimerState.Running)
             {
-                modeStartTime = modeEndTime;
-                mode = getNextMode(mode);
-                modeEndTime = modeStartTime + _modeIntervals[mode];
+                // Use the saved state as a starting point and then figure out what mode we should currently be in based on the 
+                // elapsed time.
+                Mode mode = savedState.CurrentMode;
+                
+                DateTime modeStartTime = DateTime.FromBinary(savedState.CurrentModeStartTime);
+                DateTime modeEndTime = modeStartTime + _modeIntervals[mode];
+
+                while (modeEndTime < now)
+                {
+                    modeStartTime = modeEndTime;
+                    mode = getNextMode(mode);
+                    modeEndTime = modeStartTime + _modeIntervals[mode];
+                }
+
+                _currentModeStart = modeStartTime;
+                CurrentMode = mode;
             }
 
-            CurrentMode = mode;
-            _currentModeStart = modeStartTime;
+            // This will finish initializing the _currentModeStart and the _timeRemainingInCurrentMode variables.
+            GetTimeRemainingInCurrentMode();
         }
 
         public TimeSpan GetTimeRemainingInCurrentMode()
         {
             DateTime now = DateTime.Now;
-            TimeSpan timeInCurrentMode = now - _currentModeStart;
-            TimeSpan maxTimeInCurrentMode = _modeIntervals[CurrentMode];
-
-            if (timeInCurrentMode >= maxTimeInCurrentMode)
+            if (State == TimerState.Running)
             {
-                // Time to switch modes
-                CurrentMode = NextMode;
+                TimeSpan timeInCurrentMode = now - _currentModeStart;
+                TimeSpan maxTimeInCurrentMode = _modeIntervals[CurrentMode];
 
-                _currentModeStart = now;
-                timeInCurrentMode = TimeSpan.FromSeconds(0);
+                if (timeInCurrentMode >= maxTimeInCurrentMode)
+                {
+                    // Time to switch modes
+                    SkipToNextMode();
+                    maxTimeInCurrentMode = _modeIntervals[CurrentMode];
+
+                    timeInCurrentMode = TimeSpan.FromSeconds(0);
+                }
+
+                // Save the time remaining in case the user pauses the timer
+                _timeRemainingInCurrentMode = maxTimeInCurrentMode - timeInCurrentMode;
+            }
+            else // Paused
+            {
+                // Update the current mode start time so when the user does resume the timer, we'll have accurate data
+                _currentModeStart = now - (_modeIntervals[CurrentMode] - _timeRemainingInCurrentMode);
             }
 
-            return maxTimeInCurrentMode - timeInCurrentMode;
+            return _timeRemainingInCurrentMode;
+        }
+
+        public void SkipToNextMode()
+        {
+            CurrentMode = NextMode;
+            _currentModeStart = DateTime.Now;
+            _timeRemainingInCurrentMode = _modeIntervals[CurrentMode];
+
+            // Update the notification queue
+            ScheduleNotifications();
+        }
+
+        public void SetTimerState(TimerState newState)
+        {
+            if (newState != State)
+            {
+                State = newState;
+
+                // Update the notification queue
+                ScheduleNotifications();
+            }
         }
 
         /// <summary>
@@ -107,28 +160,31 @@ namespace SitStandTimer
             // TODO: leaving this in for now to test. Want to make sure that past notifications fire properly
             //ToastNotificationManager.History.Clear();
 
-            // Schedule all notifications that will appear in the next 30 min
-            DateTimeOffset now = DateTimeOffset.Now;
-            TimeSpan thirtyMin = TimeSpan.FromMinutes(30);
-            Mode modeToNotifyEnd = CurrentMode;
-            DateTimeOffset nextNotificationTime = now + GetTimeRemainingInCurrentMode();
-
-            while (nextNotificationTime - now < thirtyMin)
+            if (State == TimerState.Running)
             {
-                Mode nextMode = getNextMode(modeToNotifyEnd);
+                // Schedule all notifications that will appear in the next 30 min
+                DateTimeOffset now = DateTimeOffset.Now;
+                TimeSpan thirtyMin = TimeSpan.FromMinutes(30);
+                Mode modeToNotifyEnd = CurrentMode;
+                DateTimeOffset nextNotificationTime = now + GetTimeRemainingInCurrentMode();
 
-                XmlDocument toastXml = ToastNotificationManager.GetTemplateContent(ToastTemplateType.ToastImageAndText01);
-                IXmlNode textNode = toastXml.GetElementsByTagName("text")[0];
-                textNode.AppendChild(toastXml.CreateTextNode($"Time to {nextMode}! ({nextNotificationTime.ToString("t")})"));
+                while (nextNotificationTime - now < thirtyMin)
+                {
+                    Mode nextMode = getNextMode(modeToNotifyEnd);
 
-                ScheduledToastNotification notification = new ScheduledToastNotification(toastXml, nextNotificationTime);
-                _toastNotifier.AddToSchedule(notification);
-                addedNotifications.Add(notification.DeliveryTime.ToString());
+                    XmlDocument toastXml = ToastNotificationManager.GetTemplateContent(ToastTemplateType.ToastImageAndText01);
+                    IXmlNode textNode = toastXml.GetElementsByTagName("text")[0];
+                    textNode.AppendChild(toastXml.CreateTextNode($"Time to {nextMode}! ({nextNotificationTime.ToString("t")})"));
 
-                modeToNotifyEnd = nextMode;
+                    ScheduledToastNotification notification = new ScheduledToastNotification(toastXml, nextNotificationTime);
+                    _toastNotifier.AddToSchedule(notification);
+                    addedNotifications.Add(notification.DeliveryTime.ToString());
 
-                TimeSpan timeForMode = _modeIntervals[modeToNotifyEnd];
-                nextNotificationTime = nextNotificationTime + timeForMode;
+                    modeToNotifyEnd = nextMode;
+
+                    TimeSpan timeForMode = _modeIntervals[modeToNotifyEnd];
+                    nextNotificationTime = nextNotificationTime + timeForMode;
+                }
             }
 
             _lastDebugInfo = new DebugInfo()
@@ -143,11 +199,13 @@ namespace SitStandTimer
         {
             // Make sure the mode is up to date
             GetTimeRemainingInCurrentMode();
-
+            
             return new SaveStateModel()
             {
                 CurrentMode = CurrentMode,
                 CurrentModeStartTime = _currentModeStart.ToBinary(),
+                TimerState = State,
+                TimeRemainingInCurrentMode = _timeRemainingInCurrentMode,
                 LastRunDebugInfo = _lastDebugInfo
             };
         }
@@ -159,6 +217,7 @@ namespace SitStandTimer
         }
 
         private DateTime _currentModeStart;
+        private TimeSpan _timeRemainingInCurrentMode;
         private ToastNotifier _toastNotifier;
         private DebugInfo _lastDebugInfo;
 

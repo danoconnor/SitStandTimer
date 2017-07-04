@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
 
 namespace SitStandTimer.ViewModels
 {
@@ -25,14 +26,64 @@ namespace SitStandTimer.ViewModels
 
         public string ModeText { get; private set; }
         public string TimeLeftText { get; private set; }
+        public Symbol ChangeStateIcon
+        {
+            get
+            {
+                if (TimeManager.Instance.State == TimerState.Running)
+                {
+                    return Symbol.Pause;
+                }
+                else // We are paused
+                {
+                    return Symbol.Play;
+                }
+            }
+        }
+
+        public Symbol NextIcon
+        {
+            get
+            {
+                return Symbol.Next;
+            }
+        }
+
+        public void SwitchState()
+        {
+            if (TimeManager.Instance.State == TimerState.Running)
+            {
+                TimeManager.Instance.SetTimerState(TimerState.Paused);
+            }
+            else // We are currently paused
+            {
+                TimeManager.Instance.SetTimerState(TimerState.Running);
+            }
+
+            // Update the button icon
+            RaisePropertyChanged(nameof(ChangeStateIcon));
+        }
+
+        public void SkipToNextMode()
+        {
+            TimeManager.Instance.SkipToNextMode();
+            timerTick(null, null);
+        }
 
         private void timerTick(object sender, object args)
         {
             // Get the updated remaining time from TimeManager
             TimeSpan remainingTime = TimeManager.Instance.GetTimeRemainingInCurrentMode();
 
+            string timeFormat = @"hh\:mm\:ss";
+            if (remainingTime < TimeSpan.FromHours(1))
+            {
+                // Don't show the hours if the remaining time is less than an hour
+                timeFormat = @"mm\:ss";
+            }
+
             ModeText = TimeManager.Instance.CurrentMode.ToString().ToUpper();
-            TimeLeftText = $"{remainingTime.ToString(@"mm\:ss")} until you can {TimeManager.Instance.NextMode.ToString().ToLower()}";
+            TimeLeftText = $"{remainingTime.ToString(timeFormat)} until you switch to {TimeManager.Instance.NextMode.ToString().ToLower()}";
 
             RaisePropertyChanged(nameof(ModeText));
             RaisePropertyChanged(nameof(TimeLeftText));
