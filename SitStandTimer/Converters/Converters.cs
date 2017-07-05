@@ -1,4 +1,5 @@
 ﻿using System;
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Data;
 
@@ -30,6 +31,25 @@ namespace SitStandTimer.Converters
             }
 
             return convertedValue;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class InvertBoolToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            Visibility retVal = Visibility.Collapsed;
+            if (value is bool)
+            {
+                retVal = (bool)value ? Visibility.Collapsed : Visibility.Visible;
+            }
+
+            return retVal;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)

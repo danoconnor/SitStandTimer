@@ -10,6 +10,7 @@
 
     <Page.Resources>
         <converters:SymbolToGlyphStringConverter x:Key="SymbolToGlyphStringConverter" />
+        <converters:InvertBoolToVisibilityConverter x:Key="InvertBoolToVisibilityConverter" />
 
         <Style x:Key="MainPageButtonStyle" TargetType="Button" BasedOn="{StaticResource NoBordersButtonStyle}">
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -26,15 +27,22 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <TextBlock Text="{x:Bind ViewModel.ModeText, Mode=OneWay}" FontSize="50" FontWeight="Light" OpticalMarginAlignment="TrimSideBearings" Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Center" Grid.ColumnSpan="2"/>
-        <TextBlock Text="{x:Bind ViewModel.TimeLeftText, Mode=OneWay}" FontSize="30" Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.ColumnSpan="2"/>
+        <TextBlock Text="{x:Bind ViewModel.ModeText, Mode=OneWay}" Visibility="{x:Bind ViewModel.HasMultipleModes}" Style="{StaticResource TitleTextBlockStyle}" Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Center" Grid.ColumnSpan="2"/>
+        <TextBlock Text="{x:Bind ViewModel.TimeLeftText, Mode=OneWay}" FontSize="30" Grid.Row="1" Visibility="{x:Bind ViewModel.HasMultipleModes}" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.ColumnSpan="2"/>
 
-        <Button Click="{x:Bind ViewModel.SwitchState}" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Margin="0,0,20,0" Style="{StaticResource MainPageButtonStyle}">
+        <Button Click="{x:Bind ViewModel.SwitchState}" Visibility="{x:Bind ViewModel.HasMultipleModes}" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Margin="0,0,20,0" Style="{StaticResource MainPageButtonStyle}">
             <FontIcon Glyph="{x:Bind ViewModel.ChangeStateIcon, Mode=OneWay, Converter={StaticResource SymbolToGlyphStringConverter}}" FontSize="30" />
         </Button>
 
-        <Button Click="{x:Bind ViewModel.SkipToNextMode}" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" Margin="20,0,0,0" Style="{StaticResource MainPageButtonStyle}">
+        <Button Click="{x:Bind ViewModel.SkipToNextMode}" Visibility="{x:Bind ViewModel.HasMultipleModes}" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" Margin="20,0,0,0" Style="{StaticResource MainPageButtonStyle}">
             <FontIcon Glyph="{x:Bind ViewModel.NextIcon, Converter={StaticResource SymbolToGlyphStringConverter}}" FontSize="30" />
         </Button>
+        
+        <!-- These only appear if the user has not added at least two modes to switch between -->
+        <StackPanel Visibility="{x:Bind ViewModel.HasMultipleModes, Converter={StaticResource InvertBoolToVisibilityConverter}}" Grid.ColumnSpan="2" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Text="You need at least two tasks to get started." Style="{StaticResource TitleTextBlockStyle}" Margin="0" />
+            <TextBlock Text="Add some on the configuration page" FontSize="30" FontWeight="Light" HorizontalAlignment="Center" />
+            <Button Content="Configuration page" Click="NavToConfigurationPage" HorizontalAlignment="Center" Margin="0,20,0,0" />
+        </StackPanel>
     </Grid>
 </Page>

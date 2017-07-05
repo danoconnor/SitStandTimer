@@ -7,6 +7,15 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
+    <Frame.Resources>
+        <Style x:Key="HamburgerButtonStyle" TargetType="Button" BasedOn="{StaticResource NoBordersButtonStyle}">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Height" Value="50" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        </Style>
+    </Frame.Resources>
+
     <Frame.Style>
         <Style TargetType="Frame">
             <Setter Property="Template">
@@ -21,8 +30,29 @@
                                         <FontIcon FontSize="20" Glyph="&#xE700;" />
                                     </Button>
 
+                                    <!-- Home button -->
+                                    <!-- 
+                                        TODO: the button content here should probably be put in a template. But then we lose all the nice default
+                                        button visual state styling (hover, pressed, etc) and would have to re-create that manually.
+                                     -->
+                                    <Button Click="NavToMainPage" Style="{StaticResource HamburgerButtonStyle}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="50" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <FontIcon FontSize="20" Glyph="&#xE10F;" Grid.Column="0" HorizontalAlignment="Center" />
+                                            <TextBlock Text="Home" VerticalAlignment="Center" Grid.Column="1" />
+                                        </Grid>
+                                    </Button>
+
                                     <!-- Configuration button -->
-                                    <Button Style="{StaticResource NoBordersButtonStyle}" Padding="0" Height="50" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch">
+                                    <!-- 
+                                        TODO: the button content here should probably be put in a template. But then we lose all the nice default
+                                        button visual state styling (hover, pressed, etc) and would have to re-create that manually.
+                                     -->
+                                    <Button Click="NavToConfigurationPage" Style="{StaticResource HamburgerButtonStyle}">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="50" />

@@ -23,6 +23,16 @@ namespace SitStandTimer
             _appFrameSplitView.IsPaneOpen = !_appFrameSplitView.IsPaneOpen;
         }
 
+        private void NavToConfigurationPage(object sender, RoutedEventArgs e)
+        {
+            Navigate(typeof(ConfigurationPage));
+        }
+
+        private void NavToMainPage(object sender, RoutedEventArgs e)
+        {
+            Navigate(typeof(MainPage));
+        }
+
         /// <summary>
         /// Recursively searches through the visual tree using the parent parameter as the starting point.
         /// Returns a reference to the SplitView object if found, null otherwise.

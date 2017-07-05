@@ -15,9 +15,9 @@ namespace SitStandTimer
 
         public MainPageVM ViewModel { get; private set; }
 
-        private void ToggleHamburgerMenu(object sender, RoutedEventArgs e)
+        private void NavToConfigurationPage(object sender, RoutedEventArgs e)
         {
-            //SplitView.IsPaneOpen = !SplitView.IsPaneOpen;
+            Frame.Navigate(typeof(ConfigurationPage), null);
         }
     }
 }
