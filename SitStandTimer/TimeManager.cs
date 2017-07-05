@@ -8,13 +8,7 @@ using Windows.UI.Notifications;
 using Windows.UI.Xaml;
 
 namespace SitStandTimer
-{
-    public enum Mode
-    {
-        Sit,
-        Stand
-    }
-
+{ 
     public enum TimerState
     {
         Running,

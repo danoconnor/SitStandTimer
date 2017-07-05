@@ -60,11 +60,11 @@
         </ListView>
 
         <StackPanel x:Name="AddModePanel" Visibility="Collapsed" x:Load="False" Orientation="Horizontal" RelativePanel.Below="ModeList" RelativePanel.AlignLeftWithPanel="True">
-            <TextBox PlaceholderText="Task name" Text="{x:Bind ViewModel.NewModeName, Mode=TwoWay}" Style="{StaticResource AddModeTextBoxStyle}" />
+            <TextBox PlaceholderText="Task name" Text="{x:Bind ViewModel.NewModeName, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" />
             <TextBlock Text="for" VerticalAlignment="Center" Margin="{StaticResource AddModeElementMargin}" />
-            <TextBox PlaceholderText="hours" Text="{x:Bind ViewModel.NewModeHours, Mode=TwoWay}" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
-            <TextBox PlaceholderText="minutes" Text="{x:Bind ViewModel.NewModeMinutes, Mode=TwoWay}" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
-            <TextBox PlaceholderText="seconds" Text="{x:Bind ViewModel.NewModeSeconds, Mode=TwoWay}" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
+            <TextBox PlaceholderText="hours" Text="{x:Bind ViewModel.NewModeHours, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
+            <TextBox PlaceholderText="minutes" Text="{x:Bind ViewModel.NewModeMinutes, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
+            <TextBox PlaceholderText="seconds" Text="{x:Bind ViewModel.NewModeSeconds, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
 
             <Button Click="SaveNewMode" VerticalAlignment="Center" Margin="10,0,0,0" Style="{StaticResource NoBordersButtonStyle}" Width="50" Height="50">
                 <FontIcon Glyph="&#xE105;" FontSize="20" />

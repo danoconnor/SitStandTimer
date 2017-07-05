@@ -1,7 +1,9 @@
 ﻿using SitStandTimer.Models;
 using SitStandTimer.ViewModels;
+using Windows.System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Input;
 
 namespace SitStandTimer
 {
@@ -45,6 +47,14 @@ namespace SitStandTimer
             AddModePanel.Visibility = Visibility.Collapsed;
             AddModeButton.Visibility = Visibility.Visible;
             UnloadObject(AddModePanel);
+        }
+
+        private void FocusRightOnEnterKeyUp(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == VirtualKey.Enter)
+            {
+                FocusManager.TryMoveFocus(FocusNavigationDirection.Right);
+            }
         }
     }
 }

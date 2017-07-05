@@ -13,18 +13,23 @@ namespace SitStandTimer.Models
 
         public override string ToString()
         {
-            // Format the time so we don't have a bunch of zeros
-            string timeFormat = @"hh\:mm\:ss";
-            if (TimeInMode < TimeSpan.FromMinutes(1))
+            string timeString = "";
+            if (TimeInMode.Hours != 0)
             {
-                timeFormat = @"ss";
+                timeString += TimeInMode.Hours + " hours ";
             }
-            else if (TimeInMode < TimeSpan.FromHours(1))
+            
+            if (TimeInMode.Minutes != 0)
             {
-                timeFormat = @"mm\:ss";
+                timeString += TimeInMode.Minutes + " minutes ";
             }
 
-            return string.Format("{0} for {1}", ModeName, TimeInMode.ToString(timeFormat));
+            if (TimeInMode.Seconds != 0)
+            {
+                timeString += TimeInMode.Seconds + " seconds";
+            }
+
+            return string.Format("{0} for {1}", ModeName, timeString.Trim());
         }
     }
 }

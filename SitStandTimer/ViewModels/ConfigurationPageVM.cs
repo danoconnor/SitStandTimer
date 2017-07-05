@@ -41,15 +41,21 @@ namespace SitStandTimer.ViewModels
             double.TryParse(NewModeSeconds, out newModeSeconds);
 
             double totalHours = newModeHours + (newModeMinutes / 60) + (newModeSeconds / (60 * 60));
-
-            ModeModel newMode = new ModeModel()
+            TimeSpan time = TimeSpan.FromHours(totalHours);
+            
+            // Only save the mode if the user has entered something
+            // TODO: add error message in the UI
+            if (time.TotalSeconds >= 1 && !string.IsNullOrWhiteSpace(NewModeName))
             {
-                ModeName = NewModeName,
-                TimeInMode = TimeSpan.FromHours(totalHours)
-            };
+                ModeModel newMode = new ModeModel()
+                {
+                    ModeName = NewModeName,
+                    TimeInMode = TimeSpan.FromHours(totalHours)
+                };
 
-            Modes.Add(newMode);
-            TimeManager.Instance.UpdateModes(Modes);
+                Modes.Add(newMode);
+                TimeManager.Instance.UpdateModes(Modes);
+            }            
             
             ClearNewModeStrings();
         }
