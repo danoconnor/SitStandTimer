@@ -93,15 +93,31 @@ namespace SitStandTimer
                 DateTime modeStartTime = savedState.CurrentModeStartTime;
                 DateTime modeEndTime = modeStartTime + _modeIntervals[mode];
 
+                bool modeChangedSinceLastRun = false;
                 while (modeEndTime < now)
                 {
                     modeStartTime = modeEndTime;
                     mode = getNextMode(mode);
                     modeEndTime = modeStartTime + _modeIntervals[mode];
+                    modeChangedSinceLastRun = true;
                 }
 
                 _currentModeStart = modeStartTime;
                 CurrentMode = mode;
+
+                if (modeChangedSinceLastRun && now - savedState.LastRunDebugInfo.LastRunTime > TimeSpan.FromMinutes(30))
+                {
+                    // If we have not run in the past 30 min, then the user's computer was off.
+                    // In this case figure out if the mode has changed at all since the last notification and if so,
+                    // we will force a notification immediately to notify the user which mode they are in.
+
+                    XmlDocument toastXml = ToastNotificationManager.GetTemplateContent(ToastTemplateType.ToastImageAndText01);
+                    IXmlNode textNode = toastXml.GetElementsByTagName("text")[0];
+                    textNode.AppendChild(toastXml.CreateTextNode($"Time to {CurrentMode}! ({modeStartTime.ToString("t")})"));
+
+                    ToastNotification notification = new ToastNotification(toastXml);
+                    _toastNotifier.Show(notification);
+                }
             }
 
             // This will finish initializing the _currentModeStart and the _timeRemainingInCurrentMode variables.
@@ -246,7 +262,7 @@ namespace SitStandTimer
 
             _lastDebugInfo = new DebugInfo()
             {
-                LastRunTime = DateTime.Now.ToString(),
+                LastRunTime = DateTime.Now,
                 NotificationsScheduled = addedNotifications.ToArray(),
                 ScheduledNotificationsRemoved = removedNotifications.ToArray()
             };

@@ -23,7 +23,7 @@ namespace SitStandTimer.Models
 
     public class DebugInfo
     {
-        public string LastRunTime { get; set; }
+        public DateTime LastRunTime { get; set; }
         public string[] ScheduledNotificationsRemoved { get; set; }
         public string[] NotificationsScheduled { get; set; }
     }
