@@ -1,23 +1,15 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.HockeyApp;
+using Newtonsoft.Json;
 using SitStandTimer.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.Background;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.Storage;
 using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
 namespace SitStandTimer
@@ -35,6 +27,8 @@ namespace SitStandTimer
         {
             this.InitializeComponent();
             this.Suspending += OnSuspending;
+
+            HockeyClient.Current.Configure(Constants.HockeyAppId);
 
             // Try to register the app for background execution
             var registerTask = registerTimeBackgroundTaskAsync();

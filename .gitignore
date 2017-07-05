@@ -259,3 +259,6 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/SitStandTimer/Constants.cs
+/SitStandTimer/Connected Services/HockeyApp/ConnectedService.json
+/SitStandTimer/Connected Services/HockeyApp
