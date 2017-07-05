@@ -30,6 +30,7 @@ namespace SitStandTimer
             FindName(nameof(AddModePanel));
             AddModePanel.Visibility = Visibility.Visible;
             AddModeButton.Visibility = Visibility.Collapsed;
+            TaskNameTextBox.Focus(FocusState.Programmatic);
         }
 
         private void SaveNewMode(object sender, RoutedEventArgs args)
