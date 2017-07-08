@@ -102,12 +102,14 @@ namespace SitStandTimer
                 {
                     await restoreStateTask;
                 }
-                catch (Exception)
+                catch (FileNotFoundException)
                 {
                     // A FileNotFoundException is expected if the save state file doesn't exist (although at this point it should)
+                }
+                catch (Exception e)
+                {
                     // Carry on even if we are in the wrong state
-                    // This app doesn't have telemetry hooked up yet so just eat the exception
-                    // TODO: add HockeyApp telemetry
+                    HockeyClient.Current.TrackException(e);
                 }
 
                 // Have the time manager schedule any notifications that should happen before the next time the background task runs
@@ -228,7 +230,10 @@ namespace SitStandTimer
                 catch (FileNotFoundException)
                 {
                     // Ignore because it just means that there was no save file present
-                    // TODO: how to handle other exception types?? Need some logging through HockeyApp
+                }
+                catch (Exception e)
+                {
+                    HockeyClient.Current.TrackException(e);
                 }
 
                 // Refresh the notification queue just to make sure everything is in sync.

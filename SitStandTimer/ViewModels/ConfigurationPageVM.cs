@@ -44,7 +44,6 @@ namespace SitStandTimer.ViewModels
             TimeSpan time = TimeSpan.FromHours(totalHours);
             
             // Only save the mode if the user has entered something
-            // TODO: add error message in the UI
             if (time.TotalSeconds >= 1 && !string.IsNullOrWhiteSpace(NewModeName))
             {
                 ModeModel newMode = new ModeModel()
