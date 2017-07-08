@@ -205,6 +205,13 @@ namespace SitStandTimer
                 {
                     output.Write(JsonConvert.SerializeObject(saveInfo));
                 }
+            }).ContinueWith(completedTask =>
+            {
+                // Do some error logging if the save task fails
+                if (completedTask.IsFaulted)
+                {
+                    HockeyClient.Current.TrackException(completedTask.Exception);
+                }
             });
         }
 

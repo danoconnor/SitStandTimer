@@ -91,8 +91,8 @@ namespace SitStandTimer.ViewModels
                 timeFormat = @"mm\:ss";
             }
 
-            ModeText = TimeManager.Instance.CurrentMode.ToUpper();
-            TimeLeftText = $"{remainingTime.ToString(timeFormat)} until you switch to {TimeManager.Instance.NextMode.ToLower()}";
+            ModeText = TimeManager.Instance.CurrentMode.ModeName.ToUpper();
+            TimeLeftText = $"{remainingTime.ToString(timeFormat)} until you switch to {TimeManager.Instance.NextMode?.ModeName.ToLower()}";
 
             RaisePropertyChanged(nameof(ModeText));
             RaisePropertyChanged(nameof(TimeLeftText));

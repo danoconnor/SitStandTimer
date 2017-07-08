@@ -33,10 +33,9 @@ namespace SitStandTimer
 
         private TimeManager()
         {
-            _modeIntervals = new Dictionary<string, TimeSpan>();
-            _modes = new List<string>();
+            Modes = new List<ModeModel>();
 
-            CurrentMode = "";
+            CurrentMode = null;
             State = TimerState.Running;
             _currentModeStart = DateTime.Now;
             _timeRemainingInCurrentMode = TimeSpan.MaxValue;
@@ -45,15 +44,9 @@ namespace SitStandTimer
         }
 
         public TimerState State { get; private set; }
-        public string CurrentMode { get; private set; }
-        public List<ModeModel> Modes
-        {
-            get
-            {
-                return _modeIntervals.Select(keyPair => new ModeModel() { ModeName = keyPair.Key, TimeInMode = keyPair.Value }).ToList();
-            }
-        }
-        public string NextMode
+        public ModeModel CurrentMode { get; private set; }
+        public List<ModeModel> Modes { get; private set; }
+        public ModeModel NextMode
         {
             get
             {
@@ -64,14 +57,13 @@ namespace SitStandTimer
         {
             get
             {
-                return _modes?.Count > 1;
+                return Modes?.Count > 1;
             }
         }
 
         public void Initialize(SaveStateModel savedState)
         {
-            _modeIntervals = savedState?.Modes;
-            _modes = _modeIntervals?.Keys.ToList();
+            Modes = savedState?.Modes;
 
             if (!HasMultipleModes)
             {
@@ -88,17 +80,17 @@ namespace SitStandTimer
             {
                 // Use the saved state as a starting point and then figure out what mode we should currently be in based on the 
                 // elapsed time.
-                string mode = savedState.CurrentMode;
+                ModeModel mode = savedState.CurrentMode;
                 
                 DateTime modeStartTime = savedState.CurrentModeStartTime;
-                DateTime modeEndTime = modeStartTime + _modeIntervals[mode];
+                DateTime modeEndTime = modeStartTime + mode.TimeInMode;
 
                 bool modeChangedSinceLastRun = false;
                 while (modeEndTime < now)
                 {
                     modeStartTime = modeEndTime;
                     mode = getNextMode(mode);
-                    modeEndTime = modeStartTime + _modeIntervals[mode];
+                    modeEndTime = modeStartTime + mode.TimeInMode;
                     modeChangedSinceLastRun = true;
                 }
 
@@ -127,27 +119,16 @@ namespace SitStandTimer
         public void UpdateModes(ObservableCollection<ModeModel> modes)
         {
             bool wasPreviouslyInitialized = HasMultipleModes;
-            bool currentModeExists = false;
 
-            _modeIntervals = new Dictionary<string, TimeSpan>();
-            foreach (ModeModel mode in modes)
-            {
-                _modeIntervals.Add(mode.ModeName, mode.TimeInMode);
+            Modes = modes.ToList();
+            bool currentModeExists = Modes.Any(mode => (mode.Id == CurrentMode?.Id));
 
-                if (mode.ModeName == CurrentMode)
-                {
-                    currentModeExists = true;
-                }
-            }
-
-            _modes = _modeIntervals.Keys.ToList();
-            
-            if (!wasPreviouslyInitialized && HasMultipleModes || !currentModeExists)
+            if ((!wasPreviouslyInitialized || !currentModeExists) && HasMultipleModes)
             {
                 // Reset the mode if this we went from an uninitialized to an initialized state or if the current mode has been deleted
-                CurrentMode = _modes[0];
+                CurrentMode = Modes[0];
                 _currentModeStart = DateTime.Now;
-                _timeRemainingInCurrentMode = _modeIntervals[CurrentMode];
+                _timeRemainingInCurrentMode = CurrentMode.TimeInMode;
                 GetTimeRemainingInCurrentMode();
             }
 
@@ -157,17 +138,23 @@ namespace SitStandTimer
 
         public TimeSpan GetTimeRemainingInCurrentMode()
         {
+            if (!HasMultipleModes)
+            {
+                // If we don't have more than one mode, just return a max value since there is nothing to calculate
+                return TimeSpan.MaxValue;
+            }
+
             DateTime now = DateTime.Now;
             if (State == TimerState.Running)
             {
                 TimeSpan timeInCurrentMode = now - _currentModeStart;
-                TimeSpan maxTimeInCurrentMode = _modeIntervals[CurrentMode];
+                TimeSpan maxTimeInCurrentMode = CurrentMode.TimeInMode;
 
                 if (timeInCurrentMode >= maxTimeInCurrentMode)
                 {
                     // Time to switch modes
                     SkipToNextMode();
-                    maxTimeInCurrentMode = _modeIntervals[CurrentMode];
+                    maxTimeInCurrentMode = CurrentMode.TimeInMode;
 
                     timeInCurrentMode = TimeSpan.FromSeconds(0);
                 }
@@ -178,7 +165,7 @@ namespace SitStandTimer
             else // Paused
             {
                 // Update the current mode start time so when the user does resume the timer, we'll have accurate data
-                _currentModeStart = now - (_modeIntervals[CurrentMode] - _timeRemainingInCurrentMode);
+                _currentModeStart = now - (CurrentMode.TimeInMode - _timeRemainingInCurrentMode);
             }
 
             return _timeRemainingInCurrentMode;
@@ -188,7 +175,7 @@ namespace SitStandTimer
         {
             CurrentMode = NextMode;
             _currentModeStart = DateTime.Now;
-            _timeRemainingInCurrentMode = _modeIntervals[CurrentMode];
+            _timeRemainingInCurrentMode = CurrentMode.TimeInMode;
 
             // Update the notification queue
             ScheduleNotifications();
@@ -238,12 +225,12 @@ namespace SitStandTimer
                 // Schedule all notifications that will appear in the next 30 min
                 DateTimeOffset now = DateTimeOffset.Now;
                 TimeSpan thirtyMin = TimeSpan.FromMinutes(30);
-                string modeToNotifyEnd = CurrentMode;
+                ModeModel modeToNotifyEnd = CurrentMode;
                 DateTimeOffset nextNotificationTime = now + GetTimeRemainingInCurrentMode();
 
                 while (nextNotificationTime - now < thirtyMin)
                 {
-                    string nextMode = getNextMode(modeToNotifyEnd);
+                    ModeModel nextMode = getNextMode(modeToNotifyEnd);
 
                     XmlDocument toastXml = ToastNotificationManager.GetTemplateContent(ToastTemplateType.ToastImageAndText01);
                     IXmlNode textNode = toastXml.GetElementsByTagName("text")[0];
@@ -255,7 +242,7 @@ namespace SitStandTimer
 
                     modeToNotifyEnd = nextMode;
 
-                    TimeSpan timeForMode = _modeIntervals[modeToNotifyEnd];
+                    TimeSpan timeForMode = modeToNotifyEnd.TimeInMode;
                     nextNotificationTime = nextNotificationTime + timeForMode;
                 }
             }
@@ -275,7 +262,7 @@ namespace SitStandTimer
             
             return new SaveStateModel()
             {
-                Modes = _modeIntervals,
+                Modes = Modes,
                 CurrentMode = CurrentMode,
                 CurrentModeStartTime = _currentModeStart,
                 TimerState = State,
@@ -284,18 +271,17 @@ namespace SitStandTimer
             };
         }
 
-        private string getNextMode(string currentMode)
+        private ModeModel getNextMode(ModeModel currentMode)
         {
-            int currentModeIndex = _modes.IndexOf(currentMode);
-            return _modes[(currentModeIndex + 1) % _modes.Count];
+            int currentModeIndex = Modes.IndexOf(currentMode);
+            return HasMultipleModes ? 
+                Modes[(currentModeIndex + 1) % Modes.Count] :
+                null;
         }
 
         private DateTime _currentModeStart;
         private TimeSpan _timeRemainingInCurrentMode;
         private ToastNotifier _toastNotifier;
         private DebugInfo _lastDebugInfo;
-
-        private Dictionary<string, TimeSpan> _modeIntervals;
-        private List<string> _modes;
     }
 }

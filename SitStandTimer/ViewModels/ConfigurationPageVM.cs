@@ -48,6 +48,7 @@ namespace SitStandTimer.ViewModels
             {
                 ModeModel newMode = new ModeModel()
                 {
+                    Id = Guid.NewGuid(),
                     ModeName = NewModeName,
                     TimeInMode = TimeSpan.FromHours(totalHours)
                 };

@@ -8,6 +8,7 @@ namespace SitStandTimer.Models
 {
     public class ModeModel
     {
+        public Guid Id { get; set; }
         public string ModeName { get; set; }
         public TimeSpan TimeInMode { get; set; }
 

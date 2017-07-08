@@ -11,9 +11,9 @@ namespace SitStandTimer.Models
     /// </summary>
     public class SaveStateModel
     {
-        public Dictionary<string, TimeSpan> Modes { get; set; }
+        public List<ModeModel> Modes { get; set; }
         public DateTime CurrentModeStartTime { get; set; }
-        public string CurrentMode { get; set; }
+        public ModeModel CurrentMode { get; set; }
         public TimerState TimerState { get; set; }
         public TimeSpan TimeRemainingInCurrentMode { get; set; }
 
