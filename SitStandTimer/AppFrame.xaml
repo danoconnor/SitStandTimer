@@ -21,7 +21,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate>
-                        <SplitView x:Name="AppFrameSplitView" IsPaneOpen="False" DisplayMode="CompactOverlay">
+                        <SplitView x:Name="AppFrameSplitView" IsPaneOpen="False" DisplayMode="CompactInline">
                             <SplitView.Pane>
                                 <StackPanel Background="{ThemeResource SystemAltLowColor}">
 

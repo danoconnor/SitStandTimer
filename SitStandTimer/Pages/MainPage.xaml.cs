@@ -4,11 +4,12 @@ using Windows.UI.Xaml.Controls;
 
 namespace SitStandTimer
 {
-    public sealed partial class MainPage : Page
+    public sealed partial class MainPage : PageBase
     {
         public MainPage()
         {
             this.InitializeComponent();
+            HamburgerMenuDisplayMode = SplitViewDisplayMode.CompactOverlay;
 
             DataContext = ViewModel = new MainPageVM();
         }

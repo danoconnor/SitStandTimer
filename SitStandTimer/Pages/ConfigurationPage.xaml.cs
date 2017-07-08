@@ -7,7 +7,7 @@ using Windows.UI.Xaml.Input;
 
 namespace SitStandTimer
 {
-    public sealed partial class ConfigurationPage : Page
+    public sealed partial class ConfigurationPage : PageBase
     {
         public ConfigurationPage()
         {
