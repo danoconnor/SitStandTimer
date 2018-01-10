@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using Windows.Data.Xml.Dom;
 using Windows.UI.Notifications;
@@ -273,7 +274,9 @@ namespace SitStandTimer
 
         private ModeModel getNextMode(ModeModel currentMode)
         {
-            int currentModeIndex = Modes.IndexOf(currentMode);
+            int currentModeIndex = Modes.FindIndex(mode => mode.Id == currentMode.Id);
+            Debug.Assert(currentModeIndex >= 0);
+
             return HasMultipleModes ? 
                 Modes[(currentModeIndex + 1) % Modes.Count] :
                 null;
