@@ -12,71 +12,82 @@ namespace SitStandTimer.ViewModels
     {
         public ConfigurationPageVM()
         {
-            Modes = new ObservableCollection<ModeModel>();
+            Modes = new ObservableCollection<ModeVM>();
+            ShowAddModeButton = true;
             
             foreach (ModeModel mode in TimeManager.Instance.Modes)
             {
-                Modes.Add(mode);
+                Modes.Add(new ModeVM(mode));
             }
         }
 
-        public ObservableCollection<ModeModel> Modes { get; set; }
+        public ObservableCollection<ModeVM> Modes { get; set; }
 
-        public string NewModeName { get; set; }
-        public string NewModeHours { get; set; }
-        public string NewModeMinutes { get; set; }
-        public string NewModeSeconds { get; set; }
+        public bool ShowAddModeButton { get; private set; }
 
-        public void ItemsReordered()
+        public void UpdateModes()
         {
-            TimeManager.Instance.UpdateModes(Modes);
+            TimeManager.Instance.UpdateModes(Modes.Select(modeVM => modeVM.Mode).ToList());
         }
 
-        public void SaveNewMode()
+        public void SaveModeChanges(ModeVM newModeVM)
         {
-            double newModeHours, newModeMinutes, newModeSeconds;
-
-            double.TryParse(NewModeHours, out newModeHours);
-            double.TryParse(NewModeMinutes, out newModeMinutes);
-            double.TryParse(NewModeSeconds, out newModeSeconds);
-
-            double totalHours = newModeHours + (newModeMinutes / 60) + (newModeSeconds / (60 * 60));
-            TimeSpan time = TimeSpan.FromHours(totalHours);
-            
-            // Only save the mode if the user has entered something
-            if (time.TotalSeconds >= 1 && !string.IsNullOrWhiteSpace(NewModeName))
+            if (!newModeVM.SaveChanges())
             {
-                ModeModel newMode = new ModeModel()
+                // If mode is null then the user was adding a new mode and cancelled the add. Remove the mode from the list.
+                // Otherwise, do nothing
+                if (newModeVM.Mode == null)
                 {
-                    Id = Guid.NewGuid(),
-                    ModeName = NewModeName,
-                    TimeInMode = TimeSpan.FromHours(totalHours)
-                };
+                    Modes.Remove(Modes.First(modeVM => modeVM.Mode == null));
+                }
+            }
+            else
+            {
+                // The mode being saved doesn't exist in our list yet. Add it now.
+                if (Modes.FirstOrDefault(modeVM => modeVM.Mode.Id == newModeVM.Mode.Id) == null)
+                {
+                    Modes.Add(newModeVM);
+                }
 
-                Modes.Add(newMode);
-                TimeManager.Instance.UpdateModes(Modes);
-            }            
-            
-            ClearNewModeStrings();
+                // Always update the modes so we get the changes
+                UpdateModes();
+            }
+
+            ShowAddModeButton = true;
+            RaisePropertyChanged(nameof(ShowAddModeButton));
         }
 
-        public void ClearNewModeStrings()
+        public void BeginAddNewMode()
         {
-            NewModeHours = "";
-            NewModeMinutes = "";
-            NewModeSeconds = "";
-            NewModeName = "";
+            Modes.Add(new ModeVM());
 
-            RaisePropertyChanged(nameof(NewModeHours));
-            RaisePropertyChanged(nameof(NewModeMinutes));
-            RaisePropertyChanged(nameof(NewModeSeconds));
-            RaisePropertyChanged(nameof(NewModeName));
+            ShowAddModeButton = false;
+            RaisePropertyChanged(nameof(ShowAddModeButton));
         }
 
-        public void DeleteMode(ModeModel mode)
+        public void DeleteMode(ModeVM modeVMToDelete)
         {
-            Modes.Remove(mode);
-            TimeManager.Instance.UpdateModes(Modes);
+            ModeVM modeToDelete = Modes.FirstOrDefault(modeVM => modeVM.Mode.Id == modeVMToDelete.Mode.Id);
+
+            if (modeToDelete != null)
+            {
+                Modes.Remove(Modes.First(modeVM => modeVM.Mode.Id == modeVMToDelete.Mode.Id));
+                UpdateModes();
+            }
+        }
+
+        public void CancelModeChanges(ModeVM modeVM)
+        {
+            modeVM.CancelChanges();
+
+            // If mode is null then the user was adding a new mode and cancelled the add. Remove the mode from the list.
+            if (modeVM.Mode == null)
+            {
+                Modes.Remove(Modes.First(mvm => mvm.Mode == null));
+            }
+
+            ShowAddModeButton = true;
+            RaisePropertyChanged(nameof(ShowAddModeButton));
         }
     }
 }

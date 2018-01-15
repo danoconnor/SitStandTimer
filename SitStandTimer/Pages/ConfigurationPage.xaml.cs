@@ -17,37 +17,35 @@ namespace SitStandTimer
 
         public ConfigurationPageVM ViewModel { get; private set; }
 
+        private void EditMode(object sender, RoutedEventArgs e)
+        {
+
+        }
+
         private void DeleteMode(object sender, RoutedEventArgs e)
         {
             Button clickedButton = sender as Button;
-            ModeModel mode = clickedButton.DataContext as ModeModel;
+            ModeVM mode = clickedButton.DataContext as ModeVM;
             ViewModel.DeleteMode(mode);
+        }
+
+        private void SaveModeChanges(object sender, RoutedEventArgs args)
+        {
+            Button clickedButton = sender as Button;
+            ModeVM mode = clickedButton.DataContext as ModeVM;
+            ViewModel.SaveModeChanges(mode);
+        }
+
+        private void CancelModeChanges(object sender, RoutedEventArgs args)
+        {
+            Button clickedButton = sender as Button;
+            ModeVM mode = clickedButton.DataContext as ModeVM;
+            ViewModel.CancelModeChanges(mode);
         }
 
         private void BeginAddMode(object sender, RoutedEventArgs args)
         {
-            // Need to load the elements
-            FindName(nameof(AddModePanel));
-            AddModePanel.Visibility = Visibility.Visible;
-            AddModeButton.Visibility = Visibility.Collapsed;
-            TaskNameTextBox.Focus(FocusState.Programmatic);
-        }
-
-        private void SaveNewMode(object sender, RoutedEventArgs args)
-        {
-            ViewModel.SaveNewMode();
-
-            // Handle hiding and unloading the add mode elements
-            CancelAddNewMode(sender, args);
-        }
-
-        private void CancelAddNewMode(object sender, RoutedEventArgs args)
-        {
-            ViewModel.ClearNewModeStrings();
-
-            AddModePanel.Visibility = Visibility.Collapsed;
-            AddModeButton.Visibility = Visibility.Visible;
-            UnloadObject(AddModePanel);
+            ViewModel.BeginAddNewMode();
         }
 
         private void FocusRightOnEnterKeyUp(object sender, KeyRoutedEventArgs e)

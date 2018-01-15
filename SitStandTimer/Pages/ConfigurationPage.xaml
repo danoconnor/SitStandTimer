@@ -3,7 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:SitStandTimer"
-    xmlns:models="using:SitStandTimer.Models"
+    xmlns:viewModels="using:SitStandTimer.ViewModels"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
@@ -19,66 +19,78 @@
         </Style>
     </Page.Resources>
 
-    <RelativePanel Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="30,10,10,10">
-        <TextBlock x:Name="PageTitle" Text="Set your routine" Style="{StaticResource TitleTextBlockStyle}" RelativePanel.AlignTopWithPanel="True" RelativePanel.AlignLeftWithPanel="True" />
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="8*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <RelativePanel Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="30,10,10,10">
+            <TextBlock x:Name="PageTitle" Text="Set your routine" Style="{StaticResource TitleTextBlockStyle}" RelativePanel.AlignTopWithPanel="True" RelativePanel.AlignHorizontalCenterWithPanel="True" />
 
-        <ListView ItemsSource="{x:Bind ViewModel.Modes, Mode=TwoWay}" 
-                  x:Name="ModeList"
-                  SelectionMode="None" 
-                  CanDragItems="True"
-                  AllowDrop="True"
-                  CanReorderItems="True"
-                  ReorderMode="Enabled"
-                  IsEnabled="True"
-                  DragItemsCompleted="{x:Bind ViewModel.ItemsReordered}"
-                  RelativePanel.Below="PageTitle" 
-                  RelativePanel.AlignLeftWithPanel="True">
-            <ListView.ItemTemplate>
-                <DataTemplate x:DataType="models:ModeModel">
-                    <Grid HorizontalAlignment="Stretch">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
+            <ListView ItemsSource="{x:Bind ViewModel.Modes, Mode=TwoWay}" 
+                      x:Name="ModeList"
+                      SelectionMode="None" 
+                      CanDragItems="True"
+                      AllowDrop="True"
+                      CanReorderItems="True"
+                      ReorderMode="Enabled"
+                      IsEnabled="True"
+                      DragItemsCompleted="{x:Bind ViewModel.UpdateModes}"
+                      RelativePanel.Below="PageTitle" 
+                      RelativePanel.AlignLeftWithPanel="True">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="viewModels:ModeVM">
+                        <Grid HorizontalAlignment="Stretch">
+                            <Grid HorizontalAlignment="Stretch" x:Name="ReadOnlyMode" Visibility="{x:Bind IsEditMode, Mode=OneWay, Converter={StaticResource InvertBoolToVisibilityConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
 
-                        <TextBlock Text="{x:Bind ToString()}" FontSize="30" VerticalAlignment="Center" Grid.Column="0" />
+                                <TextBlock Text="{x:Bind ModeString, Mode=OneWay}" FontSize="30" VerticalAlignment="Center" HorizontalAlignment="Left" Grid.Column="0" />
 
-                        <Button Click="DeleteMode" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="20,0,0,0" Style="{StaticResource NoBordersButtonStyle}" Width="50" Height="50">
-                            <FontIcon Glyph="&#xE107;" FontSize="20" />
-                        </Button>
+                                <Button Click="{x:Bind StartEditMode()}" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="20,0,0,0" Style="{StaticResource NoBordersButtonStyle}" Width="50" Height="50">
+                                    <FontIcon Glyph="&#xE70F;" FontSize="20" />
+                                </Button>
+                                <Button Click="DeleteMode" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" Style="{StaticResource NoBordersButtonStyle}" Width="50" Height="50">
+                                    <FontIcon Glyph="&#xE107;" FontSize="20" />
+                                </Button>
+                            </Grid>
 
-                    </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-            <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem">
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                    <Setter Property="Margin" Value="0,10,0,10" />
-                    <Setter Property="Padding" Value="0" />
-                </Style>
-            </ListView.ItemContainerStyle>
-        </ListView>
+                            <StackPanel x:Name="AddModePanel" Orientation="Horizontal" Visibility="{x:Bind IsEditMode, Mode=OneWay}">
+                                <TextBox x:Name="TaskNameTextBox" Text="{x:Bind EditModeName, Mode=TwoWay}" PlaceholderText="Task name" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" />
+                                <TextBlock Text="for" VerticalAlignment="Center" Margin="{StaticResource AddModeElementMargin}" />
+                                <TextBox PlaceholderText="hours" Text="{x:Bind EditModeHours, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
+                                <TextBox PlaceholderText="minutes" Text="{x:Bind EditModeMinutes, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
+                                <TextBox PlaceholderText="seconds" Text="{x:Bind EditModeSeconds, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
 
-        <StackPanel x:Name="AddModePanel" Visibility="Collapsed" x:Load="False" Orientation="Horizontal" RelativePanel.Below="ModeList" RelativePanel.AlignLeftWithPanel="True">
-            <TextBox x:Name="TaskNameTextBox" PlaceholderText="Task name" Text="{x:Bind ViewModel.NewModeName, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" />
-            <TextBlock Text="for" VerticalAlignment="Center" Margin="{StaticResource AddModeElementMargin}" />
-            <TextBox PlaceholderText="hours" Text="{x:Bind ViewModel.NewModeHours, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
-            <TextBox PlaceholderText="minutes" Text="{x:Bind ViewModel.NewModeMinutes, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
-            <TextBox PlaceholderText="seconds" Text="{x:Bind ViewModel.NewModeSeconds, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
+                                <Button Click="SaveModeChanges" VerticalAlignment="Center" Margin="10,0,0,0" Style="{StaticResource NoBordersButtonStyle}" Width="50" Height="50">
+                                    <FontIcon Glyph="&#xE105;" FontSize="20" />
+                                </Button>
+                                <Button Click="CancelModeChanges" Grid.Column="1" VerticalAlignment="Center" Margin="{StaticResource AddModeElementMargin}" Style="{StaticResource NoBordersButtonStyle}" Width="50" Height="50">
+                                    <FontIcon Glyph="&#xE10A;" FontSize="20" />
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Margin" Value="0,10,0,10" />
+                        <Setter Property="Padding" Value="0" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+            </ListView>
 
-            <Button Click="SaveNewMode" VerticalAlignment="Center" Margin="10,0,0,0" Style="{StaticResource NoBordersButtonStyle}" Width="50" Height="50">
-                <FontIcon Glyph="&#xE105;" FontSize="20" />
+            <Button x:Name="AddModeButton" Click="BeginAddMode" Visibility="{x:Bind ViewModel.ShowAddModeButton, Mode=OneWay}" RelativePanel.Below="ModeList" RelativePanel.AlignLeftWithPanel="True" Margin="0,10,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <FontIcon Glyph="&#xE109;" Grid.Column="0" HorizontalAlignment="Center" Margin="0,0,15,0" />
+                    <TextBlock Text="Add new" VerticalAlignment="Center" Grid.Column="1" />
+                </StackPanel>
             </Button>
-            <Button Click="CancelAddNewMode" Grid.Column="1" VerticalAlignment="Center" Margin="{StaticResource AddModeElementMargin}" Style="{StaticResource NoBordersButtonStyle}" Width="50" Height="50">
-                <FontIcon Glyph="&#xE10A;" FontSize="20" />
-            </Button>
-        </StackPanel>
-
-        <Button x:Name="AddModeButton" Click="BeginAddMode" RelativePanel.Below="AddModePanel" RelativePanel.AlignLeftWithPanel="True" Margin="0,10,0,0">
-            <StackPanel Orientation="Horizontal">
-                <FontIcon Glyph="&#xE109;" Grid.Column="0" HorizontalAlignment="Center" Margin="0,0,15,0" />
-                <TextBlock Text="Add new" VerticalAlignment="Center" Grid.Column="1" />
-            </StackPanel>
-        </Button>
-    </RelativePanel>
+        </RelativePanel>
+    </Grid>
 </local:PageBase>

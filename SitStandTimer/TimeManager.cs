@@ -64,7 +64,7 @@ namespace SitStandTimer
 
         public void Initialize(SaveStateModel savedState)
         {
-            Modes = savedState?.Modes;
+            Modes = savedState?.Modes ?? new List<ModeModel>();
 
             if (!HasMultipleModes)
             {
@@ -117,20 +117,25 @@ namespace SitStandTimer
             GetTimeRemainingInCurrentMode();
         }
 
-        public void UpdateModes(ObservableCollection<ModeModel> modes)
+        public void UpdateModes(List<ModeModel> modes)
         {
             bool wasPreviouslyInitialized = HasMultipleModes;
 
-            Modes = modes.ToList();
-            bool currentModeExists = Modes.Any(mode => (mode.Id == CurrentMode?.Id));
+            Modes = modes;
+            ModeModel newCurrentMode = Modes.FirstOrDefault(mode => (mode.Id == CurrentMode?.Id));
 
-            if ((!wasPreviouslyInitialized || !currentModeExists) && HasMultipleModes)
+            if ((!wasPreviouslyInitialized || newCurrentMode == null) && HasMultipleModes)
             {
                 // Reset the mode if this we went from an uninitialized to an initialized state or if the current mode has been deleted
                 CurrentMode = Modes[0];
                 _currentModeStart = DateTime.Now;
                 _timeRemainingInCurrentMode = CurrentMode.TimeInMode;
                 GetTimeRemainingInCurrentMode();
+            }
+            else if (newCurrentMode != null)
+            {
+                // Update the current mode to get any edits that might have been made to it.
+                CurrentMode = newCurrentMode;
             }
 
             // Update the notification queue since things have been changed
@@ -275,7 +280,7 @@ namespace SitStandTimer
         private ModeModel getNextMode(ModeModel currentMode)
         {
             int currentModeIndex = Modes.FindIndex(mode => mode.Id == currentMode.Id);
-            Debug.Assert(currentModeIndex >= 0);
+            Debug.Assert(currentModeIndex >= 0 || !HasMultipleModes);
 
             return HasMultipleModes ? 
                 Modes[(currentModeIndex + 1) % Modes.Count] :

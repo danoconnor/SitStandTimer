@@ -10,7 +10,6 @@
 
     <Page.Resources>
         <converters:SymbolToGlyphStringConverter x:Key="SymbolToGlyphStringConverter" />
-        <converters:InvertBoolToVisibilityConverter x:Key="InvertBoolToVisibilityConverter" />
 
         <!-- 
             The Hamburger menu when collapsed is 50 units wide.

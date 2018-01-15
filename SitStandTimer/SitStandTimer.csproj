@@ -114,6 +114,7 @@
     <Compile Include="TimeManager.cs" />
     <Compile Include="ViewModels\ConfigurationPageVM.cs" />
     <Compile Include="ViewModels\MainPageVM.cs" />
+    <Compile Include="ViewModels\ModeVM.cs" />
     <Compile Include="ViewModels\ViewModelBase.cs" />
   </ItemGroup>
   <ItemGroup>

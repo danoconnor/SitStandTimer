@@ -1,6 +1,7 @@
 ﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="using:SitStandTimer.Converters">
 
     <Style x:Key="NoBordersButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
@@ -13,5 +14,7 @@
         <Setter Property="OpticalMarginAlignment" Value="TrimSideBearings" />
         <Setter Property="Margin" Value="0,0,0,20" />
     </Style>
+
+    <converters:InvertBoolToVisibilityConverter x:Key="InvertBoolToVisibilityConverter" />
 
 </ResourceDictionary>
