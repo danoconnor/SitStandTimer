@@ -103,6 +103,7 @@
     <Compile Include="Converters\Converters.cs" />
     <Compile Include="Models\ModeModel.cs" />
     <Compile Include="Models\SaveStateModel.cs" />
+    <Compile Include="Models\ScheduleModel.cs" />
     <Compile Include="Pages\ConfigurationPage.xaml.cs">
       <DependentUpon>ConfigurationPage.xaml</DependentUpon>
     </Compile>
@@ -166,6 +167,9 @@
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>10.0.3</Version>
+    </PackageReference>
+    <PackageReference Include="System.ValueTuple">
+      <Version>4.4.0</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>

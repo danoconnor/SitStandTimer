@@ -16,6 +16,8 @@ namespace SitStandTimer.Models
         public ModeModel CurrentMode { get; set; }
         public TimerState TimerState { get; set; }
         public TimeSpan TimeRemainingInCurrentMode { get; set; }
+        public ScheduleModel Schedule { get; set; }
+        public int NumLoopsRemaining { get; set; }
 
         // Adding this field for debug purposes so we can see when the background task is running and what it is doing
         public DebugInfo LastRunDebugInfo { get; set; }

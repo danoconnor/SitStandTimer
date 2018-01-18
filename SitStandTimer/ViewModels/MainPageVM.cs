@@ -1,6 +1,8 @@
-﻿using System;
+﻿using SitStandTimer.Models;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -82,7 +84,8 @@ namespace SitStandTimer.ViewModels
         private void timerTick(object sender, object args)
         {
             // Get the updated remaining time from TimeManager
-            TimeSpan remainingTime = TimeManager.Instance.GetTimeRemainingInCurrentMode();
+            TimeManager.Instance.Update();
+            TimeSpan remainingTime = TimeManager.Instance.TimeRemainingInCurrentMode;
 
             string timeFormat = @"hh\:mm\:ss";
             if (remainingTime < TimeSpan.FromHours(1))
@@ -92,10 +95,57 @@ namespace SitStandTimer.ViewModels
             }
 
             ModeText = TimeManager.Instance.CurrentMode.ModeName.ToUpper();
-            TimeLeftText = $"{remainingTime.ToString(timeFormat)} until you switch to {TimeManager.Instance.NextMode?.ModeName.ToLower()}";
+
+            if (TimeManager.Instance.WillStopAfterCurrentMode())
+            {
+                ScheduleModel schedule = TimeManager.Instance.Schedule;
+                if (schedule.ScheduleType == ScheduleType.Scheduled)
+                {
+                    DayOfWeek today = DateTime.Now.DayOfWeek;
+                    DayOfWeek nextScheduledDay = today + 1;
+                    while (!schedule.Days.Contains(nextScheduledDay))
+                    {
+                        nextScheduledDay++;
+                    }
+
+                    string nextDayStr = nextScheduledDay.ToString();
+                    if (nextScheduledDay - today == 1)
+                    {
+                        nextDayStr = "tomorrow";
+                    }
+
+                    TimeLeftText = $"The timer will automatically pause at {timeSpanToString(schedule.EndTime)}. It will automatically resume at {timeSpanToString(schedule.StartTime)} {nextDayStr}.";
+                }
+                else if (schedule.ScheduleType == ScheduleType.NumTimes)
+                {
+                    TimeLeftText = $"The timer will automatically stop in {remainingTime.ToString(timeFormat)} because will have completed all {schedule.NumTimesToLoop} loops.";
+                }
+                else
+                {
+                    Debug.Assert(false, "We should not be here with an infinite schedule");
+                }
+            }
+            else
+            {
+                TimeLeftText = $"{remainingTime.ToString(timeFormat)} until you switch to {TimeManager.Instance.NextMode?.ModeName.ToLower()}";
+            }
 
             RaisePropertyChanged(nameof(ModeText));
             RaisePropertyChanged(nameof(TimeLeftText));
+        }
+
+        private string timeSpanToString(TimeSpan time)
+        {
+            string timeOfDay = "am";
+            int hours = time.Hours;
+
+            if (hours > 12)
+            {
+                hours -= 12;
+                timeOfDay = "pm";
+            }
+
+            return $"{hours}:{time.ToString(@"mm:\ss") + timeOfDay}";
         }
 
         private DispatcherTimer _timer;
