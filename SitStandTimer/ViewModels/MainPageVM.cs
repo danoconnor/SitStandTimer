@@ -145,7 +145,14 @@ namespace SitStandTimer.ViewModels
                 timeOfDay = "pm";
             }
 
-            return $"{hours}:{time.ToString(@"mm:\ss") + timeOfDay}";
+            int minutes = time.Minutes;
+            string minutesStr = minutes.ToString();
+            if (minutes < 10)
+            {
+                minutesStr.Insert(0, "0");
+            }
+
+            return $"{hours}:{minutesStr} {timeOfDay}";
         }
 
         private DispatcherTimer _timer;

@@ -46,7 +46,7 @@
         <!-- These only appear if the user has not added at least two modes to switch between -->
         <StackPanel Visibility="{x:Bind ViewModel.HasMultipleModes, Converter={StaticResource InvertBoolToVisibilityConverter}}" Grid.ColumnSpan="2" Grid.RowSpan="2" HorizontalAlignment="Center" Margin="{StaticResource HorizontalCenterShift}" VerticalAlignment="Center">
             <TextBlock Text="You need at least two tasks to get started." Style="{StaticResource TitleTextBlockStyle}" Margin="0" />
-            <TextBlock Text="Add some on the configuration page" FontSize="30" FontWeight="Light" HorizontalAlignment="Center" />
+            <TextBlock Text="Add some on the configuration page" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" Margin="0,0,0,20" />
             <Button Content="Configuration page" Click="NavToConfigurationPage" HorizontalAlignment="Center" Margin="0,20,0,0" />
         </StackPanel>
     </Grid>

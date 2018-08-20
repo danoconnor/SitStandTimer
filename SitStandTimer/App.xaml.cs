@@ -28,7 +28,7 @@ namespace SitStandTimer
             this.InitializeComponent();
             this.Suspending += OnSuspending;
 
-            HockeyClient.Current.Configure(Constants.HockeyAppId);
+            HockeyClient.Current.Configure(PrivateConstants.HockeyAppId);
 
             // Try to register the app for background execution
             var registerTask = registerTimeBackgroundTaskAsync();

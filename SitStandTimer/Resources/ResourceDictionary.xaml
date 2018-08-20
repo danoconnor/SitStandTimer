@@ -15,6 +15,12 @@
         <Setter Property="Margin" Value="0,0,0,20" />
     </Style>
 
+    <Style x:Key="SubtitleTextBlockStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="30" />
+        <Setter Property="FontWeight" Value="Light" />
+        <Setter Property="OpticalMarginAlignment" Value="TrimSideBearings" />
+    </Style>
+
     <converters:InvertBoolToVisibilityConverter x:Key="InvertBoolToVisibilityConverter" />
 
 </ResourceDictionary>

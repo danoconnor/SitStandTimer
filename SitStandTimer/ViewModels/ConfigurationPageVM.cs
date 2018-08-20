@@ -5,6 +5,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
 
 namespace SitStandTimer.ViewModels
 {
@@ -14,6 +16,9 @@ namespace SitStandTimer.ViewModels
         {
             Modes = new ObservableCollection<ModeVM>();
             ShowAddModeButton = true;
+            _selectedScheduleType = TimeManager.Instance.Schedule.ScheduleType;
+
+            NumTimesOptions = Enumerable.Range(1, 100);
             
             foreach (ModeModel mode in TimeManager.Instance.Modes)
             {
@@ -24,6 +29,124 @@ namespace SitStandTimer.ViewModels
         public ObservableCollection<ModeVM> Modes { get; set; }
 
         public bool ShowAddModeButton { get; private set; }
+
+        public List<ScheduleType> ScheduleTypes
+        {
+            get
+            {
+                return ((ScheduleType[])Enum.GetValues(typeof(ScheduleType))).ToList();
+            }
+        }
+
+        private ScheduleType _selectedScheduleType;
+        public ScheduleType SelectedScheduleType
+        {
+            get { return _selectedScheduleType; }
+            set
+            {
+                _selectedScheduleType = value;
+                updateScheduleType();
+            }
+        }
+
+        public IEnumerable<int> NumTimesOptions { get; private set; }
+        public int SelectedNumTimesToLoop
+        {
+            get { return TimeManager.Instance.Schedule.NumTimesToLoop; }
+            set { TimeManager.Instance.Schedule.NumTimesToLoop = value; }
+        }
+
+        public bool ShowNumTimesOptions
+        {
+            get
+            {
+                return _selectedScheduleType == ScheduleType.NumTimes;
+            }
+        }
+
+        public TimeSpan ScheduleStartTime
+        {
+            get { return TimeManager.Instance.Schedule.StartTime; }
+            set
+            {
+                if (value >= ScheduleEndTime)
+                {
+                    // Start time is after end time, revert to previous value
+                    RaisePropertyChanged(nameof(ScheduleStartTime));
+                }
+                else
+                {
+                    TimeManager.Instance.Schedule.StartTime = value;
+                }
+            }
+        }
+
+        public TimeSpan ScheduleEndTime
+        {
+            get { return TimeManager.Instance.Schedule.EndTime; }
+            set
+            {
+                if (value <= ScheduleStartTime)
+                {
+                    // End time is before start time, revert to previous value
+                    RaisePropertyChanged(nameof(ScheduleEndTime));
+                }
+                else
+                {
+                    TimeManager.Instance.Schedule.EndTime = value;
+                }
+            }
+        }
+
+        public bool ShowScheduleTimeOptions
+        {
+            get
+            {
+                return _selectedScheduleType == ScheduleType.Scheduled;
+            }
+        }
+
+        public bool SundaySelected
+        {
+            get { return scheduleContainsDay(DayOfWeek.Sunday); }
+            set { toggleDayInSchedule(DayOfWeek.Sunday); }
+        }
+
+        public bool MondaySelected
+        {
+            get { return scheduleContainsDay(DayOfWeek.Monday); }
+            set { toggleDayInSchedule(DayOfWeek.Monday); }
+        }
+
+        public bool TuesdaySelected
+        {
+            get { return scheduleContainsDay(DayOfWeek.Tuesday); }
+            set { toggleDayInSchedule(DayOfWeek.Tuesday); }
+        }
+
+        public bool WednesdaySelected
+        {
+            get { return scheduleContainsDay(DayOfWeek.Wednesday); }
+            set { toggleDayInSchedule(DayOfWeek.Wednesday); }
+        }
+
+        public bool ThursdaySelected
+        {
+            get { return scheduleContainsDay(DayOfWeek.Thursday); }
+            set { toggleDayInSchedule(DayOfWeek.Thursday); }
+        }
+
+        public bool FridaySelected
+        {
+            get { return scheduleContainsDay(DayOfWeek.Friday); }
+            set { toggleDayInSchedule(DayOfWeek.Friday); }
+        }
+
+        public bool SaturdaySelected
+        {
+            get { return scheduleContainsDay(DayOfWeek.Saturday); }
+            set { toggleDayInSchedule(DayOfWeek.Saturday); }
+        }
 
         public void UpdateModes()
         {
@@ -89,5 +212,40 @@ namespace SitStandTimer.ViewModels
             ShowAddModeButton = true;
             RaisePropertyChanged(nameof(ShowAddModeButton));
         }
+
+        private bool scheduleContainsDay(DayOfWeek day)
+        {
+            bool containsDay = false;
+            lock (toggleDayLock)
+            {
+                containsDay = TimeManager.Instance.Schedule.Days.Contains(day);
+            }
+
+            return containsDay;
+        }
+
+        private void toggleDayInSchedule(DayOfWeek day)
+        {
+            lock (toggleDayLock)
+            {
+                if (scheduleContainsDay(day))
+                {
+                    TimeManager.Instance.Schedule.Days.Remove(day);
+                }
+                else
+                {
+                    TimeManager.Instance.Schedule.Days.Add(day);
+                }
+            }
+        }
+
+        private void updateScheduleType()
+        {
+            RaisePropertyChanged(nameof(ShowNumTimesOptions));
+            RaisePropertyChanged(nameof(ShowScheduleTimeOptions));
+            TimeManager.Instance.Schedule.ScheduleType = _selectedScheduleType;
+        }
+
+        private object toggleDayLock = new Object();
     }
 }

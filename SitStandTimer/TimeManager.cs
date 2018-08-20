@@ -77,19 +77,18 @@ namespace SitStandTimer
         {
             Modes = savedState?.Modes ?? new List<ModeModel>();
 
-            if (!HasMultipleModes)
-            {
-                return;
-            }
-
-            DateTime now = DateTime.Now;
-
             Schedule = savedState.Schedule ?? new ScheduleModel() { ScheduleType = ScheduleType.Indefinite };
             NumLoopsRemaining = savedState.NumLoopsRemaining;
             State = savedState.TimerState;
             CurrentMode = savedState.CurrentMode;
             TimeRemainingInCurrentMode = savedState.TimeRemainingInCurrentMode;
 
+            if (!HasMultipleModes)
+            {
+                return;
+            }
+
+            DateTime now = DateTime.Now;
             if (State == TimerState.Running)
             {
                 // Use the saved state as a starting point and then figure out what mode we should currently be in based on the 
@@ -133,10 +132,6 @@ namespace SitStandTimer
                     _toastNotifier.Show(notification);
                 }
             }
-
-            // TODO: TEST CODE, REMOVE LATER
-            Schedule.ScheduleType = ScheduleType.NumTimes;
-            NumLoopsRemaining = 1;
 
             // Finish up initialization to make sure the state is correct based on the schedule and finish initializing the 
             // _currentModeStart and the _timeRemainingInCurrentMode variables
@@ -211,7 +206,7 @@ namespace SitStandTimer
                 CurrentMode = Modes[0];
                 TimeRemainingInCurrentMode = CurrentMode.TimeInMode;
                 _currentModeStart = DateTime.Now;
-                NumLoopsRemaining = Schedule.NumTimesToLoop ?? 1;
+                NumLoopsRemaining = Schedule.NumTimesToLoop;
             }
 
             State = newState;
@@ -243,7 +238,7 @@ namespace SitStandTimer
 
                 if (State == TimerState.Stopped)
                 {
-                    NumLoopsRemaining = Schedule.NumTimesToLoop ?? 1;
+                    NumLoopsRemaining = Schedule.NumTimesToLoop;
                 }
 
                 // Update the notification queue

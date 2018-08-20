@@ -3,6 +3,8 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:SitStandTimer"
+    xmlns:system="using:System"
+    xmlns:converters="using:SitStandTimer.Converters"
     xmlns:viewModels="using:SitStandTimer.ViewModels"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -15,19 +17,31 @@
             <Setter Property="Height" Value="25" />
             <Setter Property="Margin" Value="{StaticResource AddModeElementMargin}" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
+
+        <converters:ScheduleTypeToStringConverter x:Key="ScheduleTypeToStringConverter" />
     </Page.Resources>
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="30,10,10,30">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="8*" />
+            <ColumnDefinition Width="8*" MinWidth="500" />
+            <ColumnDefinition Width="*" MinWidth="11" />
+            <ColumnDefinition Width="8*" MinWidth="500" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <RelativePanel Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="30,10,10,10">
-            <TextBlock x:Name="PageTitle" Text="Set your routine" Style="{StaticResource TitleTextBlockStyle}" RelativePanel.AlignTopWithPanel="True" RelativePanel.AlignHorizontalCenterWithPanel="True" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
+        <TextBlock x:Name="PageTitle" Text="Set your routine" Style="{StaticResource TitleTextBlockStyle}" Grid.Column="1" Grid.ColumnSpan="3" HorizontalAlignment="Center" />
+
+        <StackPanel Grid.Row="1" Grid.Column="1">
+            <TextBlock Text="What you want to do" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" Margin="0,-10,0,20" />
+            
             <ListView ItemsSource="{x:Bind ViewModel.Modes, Mode=TwoWay}" 
                       x:Name="ModeList"
                       SelectionMode="None" 
@@ -36,9 +50,7 @@
                       CanReorderItems="True"
                       ReorderMode="Enabled"
                       IsEnabled="True"
-                      DragItemsCompleted="{x:Bind ViewModel.UpdateModes}"
-                      RelativePanel.Below="PageTitle" 
-                      RelativePanel.AlignLeftWithPanel="True">
+                      DragItemsCompleted="{x:Bind ViewModel.UpdateModes}">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="viewModels:ModeVM">
                         <Grid HorizontalAlignment="Stretch">
@@ -49,7 +61,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Text="{x:Bind ModeString, Mode=OneWay}" FontSize="30" VerticalAlignment="Center" HorizontalAlignment="Left" Grid.Column="0" />
+                                <TextBlock Text="{x:Bind ModeString, Mode=OneWay}" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Left" Grid.Column="0" TextWrapping="WrapWholeWords" />
 
                                 <Button Click="{x:Bind StartEditMode()}" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="20,0,0,0" Style="{StaticResource NoBordersButtonStyle}" Width="50" Height="50">
                                     <FontIcon Glyph="&#xE70F;" FontSize="20" />
@@ -60,16 +72,16 @@
                             </Grid>
 
                             <StackPanel x:Name="AddModePanel" Orientation="Horizontal" Visibility="{x:Bind IsEditMode, Mode=OneWay}">
-                                <TextBox x:Name="TaskNameTextBox" Text="{x:Bind EditModeName, Mode=TwoWay}" PlaceholderText="Task name" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" />
+                                <TextBox x:Name="TaskNameTextBox" Text="{x:Bind EditModeName, Mode=TwoWay}" PlaceholderText="Task name" Width="115" HorizontalContentAlignment="Left" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" Margin="0,0,5,0" />
                                 <TextBlock Text="for" VerticalAlignment="Center" Margin="{StaticResource AddModeElementMargin}" />
-                                <TextBox PlaceholderText="hours" Text="{x:Bind EditModeHours, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
-                                <TextBox PlaceholderText="minutes" Text="{x:Bind EditModeMinutes, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
-                                <TextBox PlaceholderText="seconds" Text="{x:Bind EditModeSeconds, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
+                                <TextBox PlaceholderText="hours" Text="{x:Bind EditModeHours, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Width="64" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
+                                <TextBox PlaceholderText="minutes" Text="{x:Bind EditModeMinutes, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Width="73" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
+                                <TextBox PlaceholderText="seconds" Text="{x:Bind EditModeSeconds, Mode=TwoWay}" KeyUp="FocusRightOnEnterKeyUp" Width="74" Style="{StaticResource AddModeTextBoxStyle}" InputScope="Number" />
 
                                 <Button Click="SaveModeChanges" VerticalAlignment="Center" Margin="10,0,0,0" Style="{StaticResource NoBordersButtonStyle}" Width="50" Height="50">
                                     <FontIcon Glyph="&#xE105;" FontSize="20" />
                                 </Button>
-                                <Button Click="CancelModeChanges" Grid.Column="1" VerticalAlignment="Center" Margin="{StaticResource AddModeElementMargin}" Style="{StaticResource NoBordersButtonStyle}" Width="50" Height="50">
+                                <Button Click="CancelModeChanges" Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource NoBordersButtonStyle}" Width="50" Height="50">
                                     <FontIcon Glyph="&#xE10A;" FontSize="20" />
                                 </Button>
                             </StackPanel>
@@ -79,7 +91,6 @@
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        <Setter Property="Margin" Value="0,10,0,10" />
                         <Setter Property="Padding" Value="0" />
                     </Style>
                 </ListView.ItemContainerStyle>
@@ -91,6 +102,62 @@
                     <TextBlock Text="Add new" VerticalAlignment="Center" Grid.Column="1" />
                 </StackPanel>
             </Button>
-        </RelativePanel>
+        </StackPanel>
+
+        <Rectangle Fill="{ThemeResource AppBarSeparatorForegroundThemeBrush}" Opacity="0.5" Width="1" VerticalAlignment="Stretch" Grid.Row="1" Grid.Column="2" />
+
+        <Grid Grid.Row="1" Grid.Column="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            
+            <TextBlock Text="How long you want to do it for" Style="{StaticResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" Margin="0,-10,0,20" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" />
+
+            <TextBlock Text="When to run the schedule: " FontSize="20" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,4,10,0" />
+            <ComboBox x:Name="SelectedModeComboBox" 
+                      ItemsSource="{x:Bind ViewModel.ScheduleTypes, Converter={StaticResource ScheduleTypeToStringConverter}}" 
+                      SelectedItem="{x:Bind ViewModel.SelectedScheduleType, Converter={StaticResource ScheduleTypeToStringConverter}, Mode=TwoWay}" 
+                      Grid.Row="1"
+                      Grid.Column="1"
+                      Width="200"
+                      Margin="0,9,0,0"/>
+
+            <!-- Num times options -->
+            <TextBlock x:Name="NumTimesTitle" Text="Rotations before stopping: " Visibility="{x:Bind ViewModel.ShowNumTimesOptions, Mode=OneWay}" FontSize="20" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,4,10,0" />
+            <ComboBox x:Name="NumTimesComboBox" 
+                      ItemsSource="{x:Bind ViewModel.NumTimesOptions}" 
+                      SelectedItem="{x:Bind ViewModel.SelectedNumTimesToLoop, Mode=TwoWay}" 
+                      Grid.Row="2"
+                      Grid.Column="1"
+                      Width="200"
+                      Margin="0,9,0,0"
+                      Visibility="{x:Bind ViewModel.ShowNumTimesOptions, Mode=OneWay}"/>
+
+            <!-- Schedule time options -->
+            <TextBlock Text="Start at: " Visibility="{x:Bind ViewModel.ShowScheduleTimeOptions, Mode=OneWay}" FontSize="20" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,4,10,0" />
+            <TimePicker Time="{x:Bind ViewModel.ScheduleStartTime, Mode=TwoWay}" Visibility="{x:Bind ViewModel.ShowScheduleTimeOptions, Mode=OneWay}" Grid.Row="2" Grid.Column="1" Margin="0,9,0,0" />
+
+            <TextBlock Text="End at: " Visibility="{x:Bind ViewModel.ShowScheduleTimeOptions, Mode=OneWay}" FontSize="20" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,4,10,0" />
+            <TimePicker Time="{x:Bind ViewModel.ScheduleEndTime, Mode=TwoWay}" Visibility="{x:Bind ViewModel.ShowScheduleTimeOptions, Mode=OneWay}" Grid.Row="3" Grid.Column="1" Margin="0,9,0,0" />
+
+            <TextBlock Text="On days: " Visibility="{x:Bind ViewModel.ShowScheduleTimeOptions, Mode=OneWay}" FontSize="20" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Margin="0,4,10,0" />
+            <StackPanel Orientation="Horizontal" Visibility="{x:Bind ViewModel.ShowScheduleTimeOptions, Mode=OneWay}" Grid.Row="4" Grid.Column="1" Margin="0,5,0,0" >
+                <ToggleButton Content="Su" IsChecked="{x:Bind ViewModel.SundaySelected, Mode=TwoWay}" />
+                <ToggleButton Content="Mo" IsChecked="{x:Bind ViewModel.MondaySelected, Mode=TwoWay}" />
+                <ToggleButton Content="Tu" IsChecked="{x:Bind ViewModel.TuesdaySelected, Mode=TwoWay}" />
+                <ToggleButton Content="We" IsChecked="{x:Bind ViewModel.WednesdaySelected, Mode=TwoWay}" />
+                <ToggleButton Content="Th" IsChecked="{x:Bind ViewModel.ThursdaySelected, Mode=TwoWay}" />
+                <ToggleButton Content="Fr" IsChecked="{x:Bind ViewModel.FridaySelected, Mode=TwoWay}" />
+                <ToggleButton Content="Sa" IsChecked="{x:Bind ViewModel.SaturdaySelected, Mode=TwoWay}" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </local:PageBase>
