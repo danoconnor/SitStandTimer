@@ -42,6 +42,7 @@ namespace SitStandTimer
             NumLoopsRemaining = 1;
             _currentModeStart = DateTime.Now;
             TimeRemainingInCurrentMode = TimeSpan.MaxValue;
+            Schedule = new ScheduleModel();
 
             _toastNotifier = ToastNotificationManager.CreateToastNotifier();
         }
@@ -160,6 +161,31 @@ namespace SitStandTimer
             }
 
             // Update the notification queue since things have been changed
+            ScheduleNotifications();
+        }
+
+        public void NotifySchedulePropertyChanged(string propertyName)
+        {
+            switch (propertyName)
+            {
+                case nameof(ScheduleModel.NumTimesToLoop):
+                    NumLoopsRemaining = Schedule.NumTimesToLoop;
+                    break;
+                case nameof(ScheduleModel.ScheduleType):
+                    if (Schedule.ScheduleType == ScheduleType.NumTimes)
+                    {
+                        NumLoopsRemaining = Schedule.NumTimesToLoop;
+                    }
+                    else
+                    {
+                        NumLoopsRemaining = 0;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            Update();
             ScheduleNotifications();
         }
 
@@ -284,12 +310,13 @@ namespace SitStandTimer
                 TimeSpan thirtyMin = TimeSpan.FromMinutes(30);
                 ModeModel modeToNotifyEnd = CurrentMode;
                 DateTimeOffset nextNotificationTime = now + TimeRemainingInCurrentMode;
+                int numLoopsRemaining = NumLoopsRemaining;
 
                 while (nextNotificationTime - now < thirtyMin)
                 {
                     (ModeModel nextMode, bool modesDidLoop) = getNextMode(modeToNotifyEnd);
 
-                    if (modesDidLoop && Schedule.ScheduleType == ScheduleType.NumTimes && NumLoopsRemaining-- ==  0)
+                    if (modesDidLoop && Schedule.ScheduleType == ScheduleType.NumTimes && numLoopsRemaining-- ==  0)
                     {
                         // We have finished our last loop, do not schedule any more notifications
                         break;

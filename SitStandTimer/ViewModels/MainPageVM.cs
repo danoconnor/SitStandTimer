@@ -79,13 +79,27 @@ namespace SitStandTimer.ViewModels
         {
             TimeManager.Instance.SkipToNextMode();
             timerTick(null, null);
+
+            if (TimeManager.Instance.Schedule.ScheduleType == ScheduleType.NumTimes)
+            {
+                // Need to update the change state icon in case this mode was the last one and we automatically switched to a pause state
+                RaisePropertyChanged(nameof(ChangeStateIcon));
+            }
         }
 
         private void timerTick(object sender, object args)
         {
+            Symbol currentStateIcon = ChangeStateIcon;
+
             // Get the updated remaining time from TimeManager
             TimeManager.Instance.Update();
             TimeSpan remainingTime = TimeManager.Instance.TimeRemainingInCurrentMode;
+
+            // Update icon if the timer automatically stopped or started
+            if (currentStateIcon != ChangeStateIcon)
+            {
+                RaisePropertyChanged(nameof(ChangeStateIcon));
+            }
 
             string timeFormat = @"hh\:mm\:ss";
             if (remainingTime < TimeSpan.FromHours(1))

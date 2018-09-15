@@ -16,7 +16,8 @@ namespace SitStandTimer.ViewModels
         {
             Modes = new ObservableCollection<ModeVM>();
             ShowAddModeButton = true;
-            _selectedScheduleType = TimeManager.Instance.Schedule.ScheduleType;
+            _schedule = TimeManager.Instance.Schedule;
+            _selectedScheduleType = _schedule.ScheduleType;
 
             NumTimesOptions = Enumerable.Range(1, 100);
             
@@ -52,8 +53,12 @@ namespace SitStandTimer.ViewModels
         public IEnumerable<int> NumTimesOptions { get; private set; }
         public int SelectedNumTimesToLoop
         {
-            get { return TimeManager.Instance.Schedule.NumTimesToLoop; }
-            set { TimeManager.Instance.Schedule.NumTimesToLoop = value; }
+            get { return _schedule.NumTimesToLoop; }
+            set
+            {
+                _schedule.NumTimesToLoop = value;
+                TimeManager.Instance.NotifySchedulePropertyChanged(nameof(ScheduleModel.NumTimesToLoop));
+            }
         }
 
         public bool ShowNumTimesOptions
@@ -66,7 +71,7 @@ namespace SitStandTimer.ViewModels
 
         public TimeSpan ScheduleStartTime
         {
-            get { return TimeManager.Instance.Schedule.StartTime; }
+            get { return _schedule.StartTime; }
             set
             {
                 if (value >= ScheduleEndTime)
@@ -76,14 +81,15 @@ namespace SitStandTimer.ViewModels
                 }
                 else
                 {
-                    TimeManager.Instance.Schedule.StartTime = value;
+                    _schedule.StartTime = value;
+                    TimeManager.Instance.NotifySchedulePropertyChanged(nameof(ScheduleModel.StartTime));
                 }
             }
         }
 
         public TimeSpan ScheduleEndTime
         {
-            get { return TimeManager.Instance.Schedule.EndTime; }
+            get { return _schedule.EndTime; }
             set
             {
                 if (value <= ScheduleStartTime)
@@ -93,7 +99,8 @@ namespace SitStandTimer.ViewModels
                 }
                 else
                 {
-                    TimeManager.Instance.Schedule.EndTime = value;
+                    _schedule.EndTime = value;
+                    TimeManager.Instance.NotifySchedulePropertyChanged(nameof(ScheduleModel.EndTime));
                 }
             }
         }
@@ -218,7 +225,7 @@ namespace SitStandTimer.ViewModels
             bool containsDay = false;
             lock (toggleDayLock)
             {
-                containsDay = TimeManager.Instance.Schedule.Days.Contains(day);
+                containsDay = _schedule.Days.Contains(day);
             }
 
             return containsDay;
@@ -230,12 +237,14 @@ namespace SitStandTimer.ViewModels
             {
                 if (scheduleContainsDay(day))
                 {
-                    TimeManager.Instance.Schedule.Days.Remove(day);
+                    _schedule.Days.Remove(day);
                 }
                 else
                 {
-                    TimeManager.Instance.Schedule.Days.Add(day);
+                    _schedule.Days.Add(day);
                 }
+
+                TimeManager.Instance.NotifySchedulePropertyChanged(nameof(ScheduleModel.Days));
             }
         }
 
@@ -243,9 +252,11 @@ namespace SitStandTimer.ViewModels
         {
             RaisePropertyChanged(nameof(ShowNumTimesOptions));
             RaisePropertyChanged(nameof(ShowScheduleTimeOptions));
-            TimeManager.Instance.Schedule.ScheduleType = _selectedScheduleType;
+            _schedule.ScheduleType = _selectedScheduleType;
+            TimeManager.Instance.NotifySchedulePropertyChanged(nameof(ScheduleModel.ScheduleType));
         }
 
+        private ScheduleModel _schedule;
         private object toggleDayLock = new Object();
     }
 }
